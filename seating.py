@@ -7,7 +7,7 @@ xCords = []
 yCords = []
 Neglected = []
 
-def main():
+def seating_algorithm():
 
     Partners = False
     while True:
@@ -970,4 +970,5 @@ def print_spreadsheet():
                     row.append("none" + (" " * (CellWidth - 4)))
             CSVoutput.writerow(row)
 
-main()
+if __name__ == "__main__":
+    print_spreadsheet()
