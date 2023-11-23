@@ -7,6 +7,8 @@ xCords = []
 yCords = []
 Neglected = []
 
+# Reconfigure main function to take HI, I, C, F, Partners, Names, and Dimensions as inputs. User-prompting functions
+# are no longer needed with the flask/html GUI.
 def seating_algorithm():
 
     Partners = False

@@ -1,37 +1,70 @@
-body {
-    background-image: url(images/WhiteBG.jpg);
-    background-attachment: fixed;
-}
+/* main background */
+body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 
+/* class dimensions page setup */
+.CLASSROW {height: 23.75%;}
+.CLASSCONTAINER {height:1000px;}
 .desk {
     height: 100%;
     width: 100%;
-    background-color: rgba(8, 37, 103, 0.5);
+    background-color: rgba(173, 216, 230, 0.5);
     border-radius: 10px;
 }
 
-.CLASSROW {
-    height: 23.75%;
+/* Green&Red "+" buttons above comp/incomp tables */
+#redPlusButton {color: crimson;border: 2px solid crimson;height: 35px;}
+#redPlusButton:hover {background-color: #f38399}
+#greenPlusButton {color: forestgreen;border: 2px solid forestgreen;height: 35px;}
+#greenPlusButton:hover {background-color: #77dd77}
+#redPlusButton:focus, #redPlusButton:active, #greenPlusButton:focus, #redPlusButton:active, .pulse:focus, .pulse:active {outline: none !important;box-shadow: none !important;}
+
+/* incomp/comp studetn selection area */
+.student {
+    height: 50px;
+    margin: 5px;
+    width: 20%;
+    background-color: rgb(173, 216, 230);
+    border-radius: 2px;
+    box-sizing: border-box;
+    padding: 0;
 }
 
-.CLASSCONTAINER {
-    height:1000px;
+#StudentSelection {
+    border: 2px solid crimson;
+    border-radius: 10px;
+    background-color: rgba(220, 20, 60, 0.1)
 }
 
+.tables {margin-top:35px;}
+
+/* info buttons */
+.help {background-color: rgb(173, 216, 230);width:60px;height:55px;}
+.help:hover {background-color: rgb(80, 172, 202);}
+.pulse {animation: pulse 1s infinite;border-radius: 50%;}
+.NextButton {display:none;height:40px;width:80px;}
+
+/* pulsing info buttons */
+@keyframes pulse {
+0% {background-color: lightblue;}
+50% { background-color: cornflowerblue;}
+100% {background-color: lightblue;}
+}
+
+/* container size modifications for smaller viewports */
 @media (max-width: 1700px) {
-    .CLASSCONTAINER {
-        height:800px;
-    }
+    .CLASSCONTAINER {height:800px;}
 }
 
 @media (max-width: 1000px) {
-    .CLASSCONTAINER {
-        height:650px;
-    }
+    .CLASSCONTAINER {height:650px;}
+    .student {height: 40px;margin: 5px;}
 }
 
 @media (max-width: 700px) {
-    .CLASSCONTAINER {
-        height:500px;
-    }
+    .CLASSCONTAINER {height:500px;}
+    .bi-emoji-smile {font-size: 20px;}
+    .student {height: 30px; width: 100px;margin: 5px;}
 }
+
+/* Imported fonts */
+@font-face {font-family: "mario";src: url(fonts/SuperMario256.ttf);}

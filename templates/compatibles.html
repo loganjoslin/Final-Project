@@ -1,0 +1,199 @@
+{% extends "layout.html" %}
+   
+
+{% block content %}
+<!--Title containing info buttons-->
+<div style="background-color:rgba(173, 216, 230, 0.5);" class="d-flex border justify-content-center align-items-center p-4 my-5">
+    <button type='button' class="pulse fs-5 btn m-0 pt-1 help d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#help">
+    <i style="font-size:60px;" class="bi bi-info-circle m-0 p-0"></i>
+    </button>
+    <h1 class="display-1 text-center mx-0 mx-sm-3" >Feed the Algorithm!</h1>
+    <button type='button' class="pulse fs-5 btn m-0 pt-1 help d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#help">
+    <i style="font-size:60px;" class="bi bi-info-circle m-0 p-0"></i>
+    </button>
+</div>
+
+<!--Student Selection Area-->
+<div class="container-lg">
+    <div class="row">
+        <div class="col-12 mt-0 mt-md-4">
+            <div id="StudentSelection" class="container-fluid p-3 d-flex justify-content-around flex-wrap">
+                {% for name in Names %}
+
+                    <div style='cursor:default;user-select:none;' class="student rounded-pill d-flex justify-content-center align-items-center fs-3">{{ name }}</div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!--Hidden NEXT button-->
+    <div class="row justify-content-center">
+        <button data-bs-toggle="modal" data-bs-target="#confirm" class="NextButton btn btn-dark mt-3 mb-0 fw-bold">
+        NEXT
+        </button>
+    </div>
+
+    <!--GREEN/RED tables-->
+    <div class="tables row justify-content-around mb-5">
+    <div class="col-6 col-md-5">
+        <div class="d-flex mx-4 flex-column">
+        <div class="d-flex justify-content-center align-items-center mb-1">
+            <h5 style="color:crimson;" class="mt-1 fw-bold fs-5 text-end">Incompatible Students</h5>
+            <button onclick="bg_red()" id="redPlusButton" class="btn p-0 px-1 mx-2">
+            <i class="h4 bi bi-plus-lg"></i>
+            </button>
+        </div>
+        <table style='cursor:default;user-select:none;' class="table table-hover text-center">
+            <tbody id="redTable" style="border-top:2px solid crimson">
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-5">
+        <div class="d-flex mx-4 flex-column">
+        <div class="d-flex justify-content-center align-items-center mb-1">
+            <button onclick="bg_green()" id="greenPlusButton" class="btn p-0 px-1 mx-2">
+            <i class="h4 bi bi-plus-lg"></i>
+            </button>
+            <h5 style="color:forestgreen;" class="mt-1 fw-bold fs-5 text-start">Compatible Students</h5>
+        </div>
+        <table style='cursor:default;user-select:none;' class="table table-hover text-center">
+            <tbody id="greenTable" style="border-top:2px solid forestgreen">
+            </tbody>
+        </table>
+        </div>
+    </div>
+    </div>
+
+    <!--Invisible modals for information and form submission confirmation-->
+    <div class="modal fade" id="help" tabindex="-1" aria-labelledby="informationModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="title">Don't be scared!</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>Your students have been placed onto the grid for convenience. Chose a table and select as many incompatible/compatible
+            student pairs as possible. Don't be scared! More input will lead to a better tailored seating plan.
+            </p>
+            <p>Use the "+" icon to switch between input categories, and click on a pair to remove them from the list. If you have any
+            questions regarding functionality, please see the "More Details" menu in the navigation bar above.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="modal fade" id="confirm" tabindex="-1" aria-labelledby="confirmationModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="title">Are you sure?</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <p>
+            More inputs, better seating! Make sure you have selected EVERY incompatible/compatible pair that you
+            would like to see in the final plan.
+            </p>
+        </div>
+        <div class="modal-footer justify-content-between">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">More Pairs</button>
+            <form action="" method="">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">That's Everyone!</button>
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JS for student/information button selection and hovering.
+
+// Plant event listeners on all buttons
+document.addEventListener('DOMContentLoaded',function() {
+    let students = document.querySelectorAll('.student');
+    let info = document.querySelectorAll('.pulse');
+    for (let x = 0; x < students.length; x++) {
+    students[x].addEventListener('click', select_student);
+    students[x].addEventListener('mouseover', mouse_over_student);
+    students[x].addEventListener('mouseout', mouse_out_student);
+    }
+    for (let n = 0; n < info.length; n++) {
+    info[n].addEventListener('click', info_selected);
+    info[n].addEventListener('mouseover', info_mouse_on);
+    info[n].addEventListener('mouseout', info_mouse_off);
+    }
+});
+
+// Respond to student selection events
+function select_student(event) {
+    let students = document.querySelectorAll('.student');
+    console.log("called function")
+    let selected = event.target;
+    let firstChoice = true;
+    for (let y = 0; y < students.length; y++) {
+    console.log(students[y].style.backgroundColor)
+    if (students[y].style.backgroundColor == 'rgb(80, 172, 203)') {
+        firstChoice = false;
+        console.log("not first choice")
+        if (students[y] == selected) {
+        students[y].style.backgroundColor = 'rgb(173, 216, 230)';
+        } else {
+        students[y].style.backgroundColor = 'rgb(173, 216, 230)';
+        save_pair(selected, students[y]);
+        break
+        }
+    }
+    }
+    if (firstChoice) {
+    selected.style.backgroundColor = "rgb(80, 172, 203)";
+    console.log("changed")
+    }
+};
+function mouse_over_student(event) {
+    let computedColor = window.getComputedStyle(event.target).getPropertyValue('background-color');
+    if (computedColor == 'rgb(173, 216, 230)') {
+    event.target.style.backgroundColor = 'rgb(80, 172, 202)';
+    }
+}
+function mouse_out_student(event) {
+    let computedColor = window.getComputedStyle(event.target).getPropertyValue('background-color');
+    if (computedColor == 'rgb(80, 172, 202)') {
+    event.target.style.backgroundColor = 'rgb(173, 216, 230)';
+    }
+}
+
+// Resplond to info button events
+let infoNotSelected = true;
+function info_mouse_on(event) {
+    event.target.closest('.pulse').style.animation = 'none';
+    event.target.closest('.pulse').style.backgroundColor = 'yellow';
+}
+function info_mouse_off(event) {
+    if (infoNotSelected) {
+    event.target.closest('.pulse').style.animation = 'pulse 1s infinite'
+    event.target.closest('.pulse').style.backgroundColor = 'lightblue'
+    } else {
+    event.target.closest('.pulse').style.backgroundColor = 'lightblue'
+    }
+}
+function info_selected() {
+    infoNotSelected = false;
+    let buttons = document.querySelectorAll('.pulse');
+    for (let i = 0; i < buttons.length; i++) {
+    buttons[i].style.animation = 'none';
+    buttons[i].style.backgroundColor = 'lightblue';
+    }
+}
+</script>
+
+{% endblock %}
+
+
