@@ -1,25 +1,44 @@
 from random import choice, shuffle
 import sys
-import math
+import csv
+
+Names = {}
+xCords = []
+yCords = []
+Neglected = []
 
 # Reconfigure main function to take HI, I, C, F, Partners, Names, and Dimensions as inputs. User-prompting functions
 # are no longer needed with the flask/html GUI.
-def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
+def seating_algorithm(Names, Height, Width, HI, I, C, F):
 
-    Names = load_names(DirtyNames)
-    print(f"Names: {Names}")
-    print(f"Names Length: {len(Names)}")
-    print(f"Height: {Height}")
-    print(f"Width: {Width}")
-    dims = get_grid_dimensions(Partners, Height, Width, Names)
-    xCords = dims[0]
-    yCords = dims[1]
+    Partners = False
+    while True:
+        inpt = input("Partnered desks? (y/n)\n").lower().strip()
+        if inpt == "yes" or inpt == "y":
+            Partners = True
+            break
+        elif inpt == "no" or inpt == "n":
+            Partners = False
+            break
 
-    output = fix_compatibles(dirtyC, Partners, HI, Width)
-    C = output["C"]
-    Removed = output["Removed"]
-    
+    load_names()
+    get_grid_dimensions(Partners)
+
+    print("List HIGHLY INCOMPATIBLE students. You are limited to two pairs. Press ENTER when finished.")
+    HI = get_pairs(2)
+
+    print("List students who should not be beside eachother. Press ENTER when finished")
+    I = get_pairs(None)
+
+    print("List students that may be seated beside one another. Press ENTER when finished.")
+    print("Note: You have specified that students will be seated at partnered desks. A student can thus only have one partner!") if Partners else print("Note: A student may have a maximum of TWO partners.")
+    C = get_pairs(None)
     find_contradiction(HI, C, I)
+    C = fix_compatibles(C, Partners, HI)
+
+    limit = int(round(len(xCords) / 3))
+    print(f"List students who should be near the front of the class. You are limited to {limit}. Press ENTER when finished.")
+    F = get_fronts(limit)
 
     MCS = get_MCS(HI, C, F)
     HI_C_F = MCS["HI_C_F"]
@@ -29,12 +48,11 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
 
     
     while True:
-        print("main loop")
         escape_loop = True
         # PHASE 1: Place HI pairs with their partners
         if len(HI) > 0:
             while True:
-                P1 = phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords)
+                P1 = phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I)
                 P1Assignments = P1["Assignments"]
                 if I_check(P1Assignments, I) and F_check(P1Assignments, F) and C_check(P1Assignments, C):
                     print("Phase 1 was succesful")
@@ -42,29 +60,22 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
                     break
                 else:
                     print("Phase 1 did not satisfy the checks. Retrying.")
-                print("loop1")
         else:
-            P1Assignments = {}
+            P1Assignments = []
             P1 = {"Removed": []}
         
-        print("Moving into phase 2")
         # PHASE 2: Place C_F with partners, then F
         P2Counter = 0
         if escape_loop:
             while True:
-                output = phase_two(Partners, C_F, F, C, P1Assignments, xCords)
-                P2Assignments = output["P2Assignments"]
-                FullReset = output["FullReset"]
-                if FullReset:
-                    escape_loop = False
-                    break
+                P2Assignments = phase_two(Partners, C_F, F, C, P1Assignments)
                 if I_check(P2Assignments, I) and F_check(P2Assignments, F) and C_check(P2Assignments, C):
                     print("Phase 2 was succesful")
                     break
                 else:
                     print("Phase 2 did not satisfy the checks. Retrying.")
                     P2Counter += 1
-                if P2Counter >= 20:
+                if P2Counter >= 2000:
                     escape_loop = False
                     break
 
@@ -72,11 +83,10 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         P3Counter = 0
         if escape_loop:
             while True:
-                output = phase_three(Partners, C, P2Assignments, xCords, yCords)
+                output = phase_three(Partners, C, P2Assignments)
                 P3Assignments = output["Assignments"]
                 ResetCheck = output["ResetCheck"]
                 if ResetCheck:
-                    print("PHASE 3 FULL RESET")
                     escape_loop = False
                     break
                 if I_check(P3Assignments, I) and F_check(P3Assignments, F) and C_check(P3Assignments, C):
@@ -85,7 +95,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
                 else:
                     print("Phase 3 did not satisfy the checks. Retrying.")
                     P3Counter += 1
-                if P3Counter >= 20:
+                if P3Counter >= 2000:
                     escape_loop = False
                     break
 
@@ -93,14 +103,14 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         P4counter = 0
         if escape_loop:
             while True:
-                P4Assignments = phase_four(P3Assignments, I, xCords, yCords)
+                P4Assignments = phase_four(P3Assignments, I)
                 if I_check(P4Assignments, I) and F_check(P4Assignments, F) and C_check(P4Assignments, C):
                     print("Phase 4 was succesful")
                     break
                 else:
                     print("Phase 4 did not satisfy the checks. Retrying.")
                     P4counter += 1
-                if P4counter >= 20:
+                if P4counter >= 2000:
                     escape_loop == False
                     break
 
@@ -108,7 +118,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
             break
 
     # PHASE 5: Place all neutral students
-    Names = phase_five(P4Assignments, xCords, yCords, Names)
+    phase_five(P4Assignments)
 
     print()
     print(f"Compatible: {C}")
@@ -122,91 +132,55 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
     print(f"Phase 4 Assignments: {P4Assignments}")
     print(f"Final Assignments: {Names}")
     print(f"Removed due to string impossibility: {P1['Removed']}")
-    print(f"Xcords: {xCords}")
-    print(f"Ycords: {yCords}")
-    print(f"Removed due to loop/comp string overstretch: {Removed}")
-    return Names
+
+    print_spreadsheet()
 
 
 # Load inputted names into memory
-def load_names(DirtyNames):
-    Names = {}
-    for name in DirtyNames:
-        Names[name.strip()] = "empty"
-    return Names
-
-# Get dimensions of classroom
-def get_grid_dimensions(Partners, Height, Width, Names):
-    xCords = []
-    yCords = []
-    if Height * Width < len(Names):
-        print("Error: Not enough seats")
-        sys.exit(3)
-    if Height * Width < 15:
-        print("Error: Class is too small!")
-        sys.exit(3)
-    if Height * Width > 50:
-        print("Error: Class is too big!")
-        sys.exit(3)
-    if Partners and (Width % 2 == 1):
-        print("Error: In a class with partnered desks, the width must be an even number!")
-        sys.exit(4)
-    for num in range(Width):
-        xCords.append(num)
-    for num in range(Height):
-        yCords.append(num)
-    return [xCords, yCords]
+def load_names():
+    with open("names.txt") as inputF:
+        for name in inputF:
+            Names[name.strip()] = "empty"
 
 # Cleanse compatibles of logical impossibilities
-def fix_compatibles(C, Partners, HI, Width):
-
-    # Ensure each student only has two compatible partners.
-    counts = {}
-    problems = []
-    for couple in C:
-        for student in couple:
-            if student in counts and Partners:
-                print("Error: Each student can only have one partner!")
-                sys.exit(1)
-            elif student in counts and not Partners:
-                counts[student] += 1
-                if counts[student] > 2:
-                    print("Error: Each student can only have two partners!")
-                    sys.exit(2)
-            else:
-                counts[student] = 1
-    
-    # Remove loop impossibility and overstretched strings of compatibles which could stress the algorithm
-    Removed = []
+def fix_compatibles(C, Partners, HI):
     while True:
-        ProblemFound = False
-        shuffle(C)
-        print(C)
-        for pair in C:
-            BaseStudent = pair[0]
-            OtherS = pair[1]
-            Counter = 0
-            PreviousStudent = BaseStudent
-            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
-                ProblemFound = True
-                PairToElim = pair
-                break
-            BaseStudent = pair[1]
-            OtherS = pair[0]
-            Counter = 0
-            PreviousStudent = BaseStudent
-            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
-                ProblemFound = True
-                PairToElim = pair
-                break
-        if ProblemFound:
-            C.remove(PairToElim)
-            Removed.append(PairToElim)
-            print(f"Removed: {PairToElim} due to loop impossibility, or comp string overstretching.")
+        counts = {}
+        problems = []
+        for couple in C:
+            for student in couple:
+                try:
+                    counts[student] += 1
+                    if Partners:
+                        print("Error: Each student can only have one partner!")
+                        sys.exit(1)
+                    if counts[student] > 2:
+                        print("Error: Each student can only have two partners!")
+                        sys.exit(2)
+                except KeyError:
+                    counts[student] = 1
+        # (a,b)(a,c)(b,c) triangle impossibility
+        for student in counts:
+            if counts[student] == 2:
+                test = []
+                for pair in C:
+                    if pair[0] == student:
+                        test.append(pair[1])
+                    if pair[1] == student:
+                        test.append(pair[0])
+                revtest = [test[1], test[0]]
+                if test in C:
+                    problems.append(test)
+                elif revtest in C:
+                    problems.append(revtest)
+        if problems:
+            rchoice = choice(problems)
+            C.remove(rchoice)
+            print(f"Removed: {rchoice} ((a,b)(a,c)(b,c) Triangle impossibility)")
         else:
             break
 
-    # HI: remove (a,b) C: (a, e) (b, e) impossibility
+    # HI: (a,b) C: (a, e) (b, e) impossibility
     for pair in HI:
         while True:
             LeftHIpartners = []
@@ -235,45 +209,85 @@ def fix_compatibles(C, Partners, HI, Width):
                 C.remove(rchoice)
                 print(f"Removed: {rchoice} (HI: (a,b) C: (a, e) (b, e) impossibility)")
             else:
+                break       
+    return C
+
+
+
+# Function for prompting user for C, HI, or I student pairs
+def get_pairs(Limit):
+    # Get inputs
+    drtyPairs = []
+    pairs = []
+    stop = False
+    while True:
+        if not Limit == None and len(drtyPairs) >= Limit:
+            break
+        while True:
+            S = input("Student 1: ").strip().capitalize()
+            if S in Names:
+                S1 = S
                 break
+            elif S.lower() in Names:
+                S1 = S.lower()
+                break
+            elif S.lower() == "":
+                stop = True
+                break
+            else:
+                print("Student not in list. Try again.")
+        if stop == True:
+            break
+        while True:
+            S = input("Student 2: ").strip().capitalize()
+            if S in Names and not S == S1:
+                S2 = S
+                break
+            elif S.lower() in Names and not S == S1:
+                S2 = S.lower()
+                break
+            elif S.lower() == "":
+                stop = True
+                break
+            elif S == S1:
+                print("Cannot input the same student twice!")
+            else:
+                print("Student not in list. Try again.")
+        if stop == True:
+            break
+        else:
+            drtyPairs.append([S1, S2])
+    # Rid dups
+    for pair in drtyPairs:
+        InversePair = [pair[1], pair[0]]
+        if (not pair in pairs) and (not InversePair in pairs):
+            pairs.append(pair)
+    return pairs
 
-    # if the classroom is 4 seats wide, this can pose problems.
-    return {
-        "C": C,
-        "Removed": Removed
-    }
-
-def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
-    Buddies = find_buddies(OtherS, C)
-    Buddies.remove(PreviousStudent)
-    print(f"Counter: {Counter}")
-    print(f"Width: {Width - 4}")
-    # DIVISOR IS ARBITRARY. ADJUST "width - 4" AS NEEDED!
-    if Counter > (Width - 4):
-        print("compatibility strong too long")
-        return True
-        # Compatibility string too long.
-    # Base Cases
-    if not Buddies:
-        return False
-        # No partners, therefore no loop.
-    if Buddies[0] == BaseStudent:
-        return True
-        # Loop found
-    Counter += 1
-    PreviousStudent = OtherS
-    OtherS = Buddies[0]
-    return loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width)
-
-
-def find_buddies(OtherS, C):
-    Buddies = []
-    for pair in C:
-        if pair[0] == OtherS:
-            Buddies.append(pair[1])
-        if pair[1] == OtherS:
-            Buddies.append(pair[0])
-    return Buddies
+# Get students who need to be placed in front
+def get_fronts(limit):
+    F = []
+    stop = False
+    count = 0
+    while stop == False and count < limit:
+        while True:
+            S = input("Student: ").strip().capitalize()
+            if S in Names and S not in F:
+                F.append(S)
+                count += 1
+                break
+            elif S.lower() in Names and S not in F:
+                F.append(S.lower())
+                count += 1
+                break
+            elif S.lower() == "":
+                stop = True
+                break
+            elif S in F:
+                print("No duplicate inputs!")
+            else:
+                print("Student not in list. Try again.")
+    return F
 
 # Find the "multi-category" students
 def get_MCS(HI, C, F):
@@ -335,45 +349,70 @@ def find_contradiction(HI, C, I):
         except ValueError:
             C.remove([pair[1], pair[0]])
 
-def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
+# Get dimensions of classroom
+def get_grid_dimensions(Partners):
+    while True:
+        try:
+            width = int(input("Class width: "))
+            break
+        except ValueError:
+            print("Input must be an integer")
+    while True:
+        try:
+            height = int(input("Class height: "))
+            break
+        except ValueError:
+            print("Input must be an integer")
+    if height * width < len(Names):
+        print("Error: Not enough seats")
+        sys.exit(3)
+    if height * width < 15:
+        print("Error: Class is too small!")
+        sys.exit(3)
+    if height * width > 50:
+        print("Error: Class is too big!")
+        sys.exit(3)
+    if Partners and (width % 2 == 1):
+        print("Error: In a class with partnered desks, the width must be an even number!")
+        sys.exit(4)
+    for num in range(width):
+        xCords.append(num)
+    for num in range(height):
+        yCords.append(num)
+
+def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I):
     
     # Define width and assignments
+    width = len(xCords)
     Assignments = {}
-    print(Width)
-    print(int(round(Width / 4)))
 
     # Get margins
-    # fix line 361 after
     LeftMargin = []
     RightMargin = []
-    for x in range(int(math.ceil(Width / 4))):
+    for x in range(int(round(width / 4))):
         LeftMargin.append(x)
-        RightMargin.append((Width - 1) - x)
+        RightMargin.append((width - 1) - x)
     print(f"Left Margin: {LeftMargin}")
     print(f"Right Margin {RightMargin}")
 
-    # Count students in HI to determine phase 1 path SHIT CODE
+    # Count students in HI to determine phase 1 path
     counts = {}
     path = "nodups"
     for pair in HI:
-        for S in pair:
-            if S in counts:
-                counts[S] += 1
-            else:
-                counts[S] = 1
-    for key in counts:
-        if counts[key] == 2:
-            dupStudent = key
-            path = "dups"
-
-    
-    print("got here")
+        for x in range(2):
+            try:
+               counts[pair[x]] += 1
+               dupStudent = pair[x]
+               path = "dups"
+            except KeyError: 
+                counts[pair[x]] = 1
+            
     # Phase one "dups" path
     if path == "dups":
         # Place duplicated student on left/right margin
         margins = [LeftMargin, RightMargin]
         shuffle(margins)
-        assigns = place_on_margin(Partners, dupStudent, margins[0], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+        assigns = place_on_margin(Partners, dupStudent, margins[0], HI_C_F, HI_F, HI_C, C, F)
         for student in assigns:
             Assignments[student] = assigns[student]
 
@@ -396,7 +435,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         # Place other students in other margin
         for S in otherSf:
             while True:
-                assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+                assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F)
                 repeats = False
                 for student in assigns:
                     if assigns[student] in Assignments.values():
@@ -410,12 +449,12 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
     if path == "nodups":
         shuffle(HI)
     
-        # Place the first HI pair with partners
+        # PLace the first HI pair with partners
         pair = HI[0]
         margins = [LeftMargin, RightMargin]
         shuffle(margins)
         for n in range(2):
-            assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+            assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F)
             for student in assigns:
                 Assignments[student] = assigns[student]
 
@@ -434,9 +473,8 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
             for n in range(2):
                 if pair[n] not in Assignments:
                     while True:
-                        print("loop1")
                         break_loop = True
-                        assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+                        assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F)
                         for student in assigns:
                             if assigns[student] in Assignments.values():
                                 break_loop = False
@@ -458,7 +496,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                             partner = cple[0]
                     # Place non-HI partner
                     if partner:
-                        if ([xcord + 1, ycord] not in Assignments.values()) and xcord + 1 < Width:
+                        if ([xcord + 1, ycord] not in Assignments.values()) and xcord + 1 < width:
                             Assignments[partner] = [xcord + 1, ycord]
                         elif ([xcord - 1, ycord] not in Assignments.values()) and xcord - 1 >= 0:
                             Assignments[partner] = [xcord - 1, ycord]
@@ -481,7 +519,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         FoundLeftP = False
         FoundRightP = False
         HISxCord = Assignments[S][0]
-        if HISxCord < Width / 2:
+        if HISxCord < width / 2:
             for student in Assignments:
                 if Assignments[student][0] == (HISxCord - 1) and Assignments[student][1] == Assignments[S][1]:
                     LeftP = student
@@ -491,7 +529,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                     if (pair[0] == LeftP and not pair[1] == S) or (pair[1] == LeftP and not pair[0] == S):
                         ToRemove.append(pair)
                 LeftP = None
-        if HISxCord > Width / 2:
+        if HISxCord > width / 2:
             for student in Assignments:
                 if Assignments[student][0] == (HISxCord + 1) and Assignments[student][1] == Assignments[S][1]:
                     RightP = student
@@ -508,53 +546,52 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
             "Edited_C": C,
             "Removed": ToRemove}
 
-def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F, Width, yCords):
-    assigns = {}
+def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F):
+    Assignments = {}
+    width = len(xCords)
     while True:
-        # Fixed indentation recently
-        break_loop = True
+            break_loop = True
 
-        # Place Student on margin. If front, place in front.
-        # NEW DEVELOPMENT: Biased the front lists to increase odds of first row.
-        x = choice(Margin)
-        if Student in HI_F or Student in HI_C_F:
-            y = choice([0, 0, 0, 0, 1])
-        elif front_partner_check(Student, F, C):
-            y = choice([0, 0, 0, 0, 1])
-        else:
-            y = choice(yCords)
-        assigns[Student] = [x, y]
+            # Place Student on margin. If front, place in front.
+            x = choice(Margin)
+            if Student in HI_F or Student in HI_C_F:
+                y = choice([0, 1])
+            elif front_partner_check(Student, F, C):
+                y = choice([0, 1])
+            else:
+                y = choice(yCords)
+            Assignments[Student] = [x, y]
 
-        # If Student has partners, place partners beside him. If impossible, restart.
-        if Student in HI_C_F or Student in HI_C:
-            xLS = x - 1
-            xRS = x + 1
-            Seats = [xLS, xRS]
-            if xLS < 0 or xLS > (Width - 1):
-                Seats.remove(xLS)
-            if xRS < 0 or xRS > (Width - 1):
-                Seats.remove(xRS)
-            for pair in C:
-                if not Seats and (pair[1] == Student or pair[0] == Student):
-                    break_loop = False
-                    break
-                elif Seats:
-                    Seat = choice(Seats)
-                    if Seats and pair[0] == Student:
-                        assigns[pair[1]] = [Seat, y]
-                        Seats.remove(Seat)
-                    if Seats and pair[1] == Student:
-                        assigns[pair[0]] = [Seat, y]
-                        Seats.remove(Seat)
-                    if Partners:
-                        if (x % 2 == 0 and Seat == xLS) or (x % 2 == 1 and Seat == xRS):
-                            break_loop = False
-                            break
-        if break_loop:
-            break
-        else:
-            assigns.clear()
-    return assigns
+            # If Student has partners, place partners beside him. If impossible, restart.
+            if Student in HI_C_F or Student in HI_C:
+                xLS = x - 1
+                xRS = x + 1
+                Seats = [xLS, xRS]
+                if xLS < 0 or xLS > (width - 1):
+                    Seats.remove(xLS)
+                if xRS < 0 or xRS > (width - 1):
+                    Seats.remove(xRS)
+                for pair in C:
+                    if not Seats and (pair[1] == Student or pair[0] == Student):
+                        break_loop = False
+                        break
+                    elif Seats:
+                        Seat = choice(Seats)
+                        if Seats and pair[0] == Student:
+                            Assignments[pair[1]] = [Seat, y]
+                            Seats.remove(Seat)
+                        if Seats and pair[1] == Student:
+                            Assignments[pair[0]] = [Seat, y]
+                            Seats.remove(Seat)
+                        if Partners:
+                            if (x % 2 == 0 and Seat == xLS) or (x % 2 == 1 and Seat == xRS):
+                                break_loop = False
+                                break
+            if break_loop:
+                break
+            else:
+                Assignments.clear()
+    return Assignments
 
 def front_partner_check(Student, F, C):
     # Find all C partners
@@ -598,14 +635,12 @@ def C_check(Assignments, C):
             return False
     return True
 
-def phase_two(Partners, C_F, F, C, Assignments, xCords):
+def phase_two(Partners, C_F, F, C, Assignments):
     # Remember to clear P2Assignments and restart if impossibilities are detected
 
     # Place the C_F students
-    counter = 0
-    FullReset = False
+
     while True:
-        print("loop3")
         escape = True
         P2Assignments = {}
         shuffle(C_F)
@@ -613,7 +648,7 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
             if (S not in Assignments) and (S not in P2Assignments):
                 while True:
                     xCord = choice(xCords)
-                    yCord = choice([0, 0, 0, 0, 1])
+                    yCord = choice([0, 1])
                     LS = [(xCord - 1), yCord]
                     RS = [(xCord + 1), yCord]
                     LeftRight = [LS, RS]
@@ -635,10 +670,10 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
                         else:
                             escape = False
                             print("Impossible placement of C_F partner. Resetting")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[1]][0] == P2Assignments[S][0] - 1):
+                        if Partners and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[1]][0] == P2Assignments[S][0] - 1):
                             escape = False
                             print("partner fail")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[1]][0] == P2Assignments[S][0] + 1):
+                        if Partners and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[1]][0] == P2Assignments[S][0] + 1):
                             escape = False
                             print("partner fail")
                     if pair[1] == S and (pair[0] not in Assignments) and (pair[0] not in P2Assignments):
@@ -649,38 +684,27 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
                         else:
                             escape = False
                             print("Impossible placement of C_F partner. Resetting")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[0]][0] == P2Assignments[S][0] - 1):
+                        if Partners and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[0]][0] == P2Assignments[S][0] - 1):
                             escape = False
                             print("partner fail")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[0]][0] == P2Assignments[S][0] + 1):
+                        if Partners and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[0]][0] == P2Assignments[S][0] + 1):
                             escape = False
                             print("partner fail")
                     if not escape:
-                        counter += 1
                         break
                 if not escape:
                     break
-        # Experimental lines
-        if (not escape) and (counter >= 20):
-            FullReset = True
-            escape = True
         if escape:
             break
     
     shuffle(F)
-    FrontLoopCount = 0
     for S in F:
         if (S not in Assignments) and (S not in P2Assignments):
             while True:
                 xCord = choice(xCords)
-                yCord = choice([0, 0, 0, 0, 1])
+                yCord = choice([0, 1])
                 if ([xCord, yCord] not in Assignments.values()) and ([xCord, yCord] not in P2Assignments.values()):
                     P2Assignments[S] = [xCord, yCord]
-                    break
-                FrontLoopCount += 1
-                print("P2R")
-                if FrontLoopCount >= 50:
-                    FullReset = True
                     break
                 print("P2R")
     
@@ -690,25 +714,20 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
     for S in Assignments:
         Combined[S] = Assignments[S]
     
-    return {
-        "FullReset": FullReset,
-        "P2Assignments": Combined
-        }
+    return Combined
 
-def phase_three(Partners, C, P2Assignments, xCords, yCords):
+def phase_three(Partners, C, P2Assignments):
     # Place remaining C partners with their partners. If ever impossible, restart.
     # Place remaining unplaced students randomly
     # Perform final I, F, C, and HI checks
-    counter = 0
     while True:
-        print("loop5")
         P3Assignments = {}
         restart = False
         shuffle(C)
+        counter = 0
         fullreset = False
         for pair in C:
 
-            # if the right student already assigned, and the left one isn't
             if (pair[1] in P2Assignments or pair[1] in P3Assignments) and (pair[0] not in P2Assignments and pair[0] not in P3Assignments):
                 if pair[1] in P2Assignments:
                     xPcord = P2Assignments[pair[1]][0]
@@ -732,7 +751,6 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
                 else:
                     P3Assignments[pair[0]] = choice(LsideRside)
                 
-            # if the left student already assigned, and the right one isn't
             if (pair[0] in P2Assignments or pair[0] in P3Assignments) and (pair[1] not in P2Assignments and pair[1] not in P3Assignments):
                 if pair[0] in P2Assignments:
                     xPcord = P2Assignments[pair[0]][0]
@@ -756,7 +774,6 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
                 else:
                     P3Assignments[pair[1]] = choice(LsideRside)
 
-            # If no one has been assigned
             if (pair[0] not in P2Assignments) and (pair[1] not in P2Assignments) and (pair[0] not in P3Assignments) and (pair[1] not in P3Assignments):
                 while True: 
                     RandomCoords = [choice(xCords), choice(yCords)]
@@ -781,14 +798,13 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
                 else:
                     P3Assignments[Students[1]] = choice(LsideRside)
             
-            #Code recently modified. Run some tests.
-            if counter >= 20:
-                fullreset = True
-                restart = False
-                break
             if restart:
                 print("Reached impossibility in Phase 3 C Assignments\nRetrying...")
                 counter += 1
+                break
+            if counter >= 2000:
+                fullreset = True
+                restart = False
                 break
 
         if not restart:
@@ -805,7 +821,7 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
 
 # Place the incompatible pairs semi-randomly. Rerun if impossibility is found.
 # HI pairs are being replaced!!!!!!!!
-def phase_four(P3Assignments, I, xCords, yCords):
+def phase_four(P3Assignments, I):
 
     while True:
 
@@ -816,14 +832,12 @@ def phase_four(P3Assignments, I, xCords, yCords):
         for pair in P3Assignments.values():
             if pair in Available:
                 Available.remove(pair)
-        print(f"Available in phase 4: {Available}")
 
         escape = True
         P4Assignments = {}
 
         for S in I:
             tried = []
-            # If both students unassigned
             if ((S[0] not in P3Assignments) and (S[0] not in P4Assignments)) and ((S[1] not in P3Assignments) and (S[1] not in P4Assignments)):
                 shuffle(S)
                 RC = choice(Available)
@@ -835,10 +849,6 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     for c in Available:
                         if c not in tried:
                             AsubT.append(c)
-                    # experimental line
-                    if not AsubT:
-                        escape = False
-                        break
                     RC2 = choice(AsubT)
                     if (abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
                         break
@@ -851,7 +861,6 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     P4Assignments[S[1]] = RC2
                     Available.remove(RC2)      
 
-            # If left is assigned
             if ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] not in P3Assignments) and (S[1] not in P4Assignments)):
                 if S[0] in P3Assignments:
                     RC = P3Assignments[S[0]]
@@ -862,10 +871,6 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     for c in Available:
                         if c not in tried:
                             AsubT.append(c)
-                    # experimental line
-                    if not AsubT:
-                        escape = False
-                        break
                     RC2 = choice(AsubT)
                     if ((abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1)) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
                         break
@@ -878,7 +883,6 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     P4Assignments[S[1]] = RC2
                     Available.remove(RC2)   
 
-            # If right is assigned
             if ((S[1] in P3Assignments) or (S[1] in P4Assignments)) and ((S[0] not in P3Assignments) and (S[0] not in P4Assignments)):
                 if S[1] in P3Assignments:
                     RC = P3Assignments[S[1]]
@@ -889,10 +893,6 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     for c in Available:
                         if c not in tried:
                             AsubT.append(c)
-                    # experimental line
-                    if not AsubT:
-                        escape = False
-                        break
                     RC2 = choice(AsubT)
                     if (abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
                         break
@@ -905,7 +905,6 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     P4Assignments[S[0]] = RC2
                     Available.remove(RC2)   
 
-            # Both assigned
             if ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] in P3Assignments) or (S[1] in P4Assignments)):
                 if S[0] in P3Assignments:
                     x0 = P3Assignments[S[0]][0]
@@ -935,7 +934,7 @@ def phase_four(P3Assignments, I, xCords, yCords):
 
     return Combined
 
-def phase_five(P4Assignments, xCords, yCords, Names):
+def phase_five(P4Assignments):
     AvailableCoords = []
     for x in xCords:
         for y in yCords:
@@ -949,4 +948,29 @@ def phase_five(P4Assignments, xCords, yCords, Names):
         if Names[S] == "empty":
             Names[S] = choice(AvailableCoords)
             AvailableCoords.remove(Names[S])
-    return Names
+
+def print_spreadsheet():
+    Longest = 4
+    for name in Names:
+        if len(name) > Longest:
+            Longest = len(name)
+    CellWidth = Longest + 1
+    with open("output.csv", "w") as outputF:
+        CSVoutput = csv.writer(outputF, delimiter="|")
+        for y in yCords:
+            row = []
+            for x in xCords:
+                exist = False
+                for name in Names:
+                    if Names[name][0] == x and Names[name][1] == y:
+                        SpaceCount = CellWidth - len(name)
+                        ReformattedName = name + (" " * SpaceCount)
+                        row.append(ReformattedName)
+                        exist = True
+                        break
+                if exist == False:
+                    row.append("none" + (" " * (CellWidth - 4)))
+            CSVoutput.writerow(row)
+
+if __name__ == "__main__":
+    seating_algorithm()

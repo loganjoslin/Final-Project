@@ -2,20 +2,24 @@ from random import choice, shuffle
 import sys
 import math
 
+# Globals are fucking up the algorithm
+Names = {}
+xCords = []
+yCords = []
+Neglected = []
+
 # Reconfigure main function to take HI, I, C, F, Partners, Names, and Dimensions as inputs. User-prompting functions
 # are no longer needed with the flask/html GUI.
 def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
 
-    Names = load_names(DirtyNames)
+    load_names(DirtyNames)
     print(f"Names: {Names}")
     print(f"Names Length: {len(Names)}")
     print(f"Height: {Height}")
     print(f"Width: {Width}")
-    dims = get_grid_dimensions(Partners, Height, Width, Names)
-    xCords = dims[0]
-    yCords = dims[1]
+    get_grid_dimensions(Partners, Height, Width)
 
-    output = fix_compatibles(dirtyC, Partners, HI, Width)
+    output = fix_compatibles(dirtyC, Partners, HI)
     C = output["C"]
     Removed = output["Removed"]
     
@@ -34,7 +38,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         # PHASE 1: Place HI pairs with their partners
         if len(HI) > 0:
             while True:
-                P1 = phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords)
+                P1 = phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I)
                 P1Assignments = P1["Assignments"]
                 if I_check(P1Assignments, I) and F_check(P1Assignments, F) and C_check(P1Assignments, C):
                     print("Phase 1 was succesful")
@@ -52,7 +56,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         P2Counter = 0
         if escape_loop:
             while True:
-                output = phase_two(Partners, C_F, F, C, P1Assignments, xCords)
+                output = phase_two(Partners, C_F, F, C, P1Assignments)
                 P2Assignments = output["P2Assignments"]
                 FullReset = output["FullReset"]
                 if FullReset:
@@ -72,7 +76,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         P3Counter = 0
         if escape_loop:
             while True:
-                output = phase_three(Partners, C, P2Assignments, xCords, yCords)
+                output = phase_three(Partners, C, P2Assignments)
                 P3Assignments = output["Assignments"]
                 ResetCheck = output["ResetCheck"]
                 if ResetCheck:
@@ -93,7 +97,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         P4counter = 0
         if escape_loop:
             while True:
-                P4Assignments = phase_four(P3Assignments, I, xCords, yCords)
+                P4Assignments = phase_four(P3Assignments, I)
                 if I_check(P4Assignments, I) and F_check(P4Assignments, F) and C_check(P4Assignments, C):
                     print("Phase 4 was succesful")
                     break
@@ -108,7 +112,7 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
             break
 
     # PHASE 5: Place all neutral students
-    Names = phase_five(P4Assignments, xCords, yCords, Names)
+    phase_five(P4Assignments)
 
     print()
     print(f"Compatible: {C}")
@@ -130,15 +134,11 @@ def seating_algorithm(DirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
 
 # Load inputted names into memory
 def load_names(DirtyNames):
-    Names = {}
     for name in DirtyNames:
         Names[name.strip()] = "empty"
-    return Names
 
 # Get dimensions of classroom
-def get_grid_dimensions(Partners, Height, Width, Names):
-    xCords = []
-    yCords = []
+def get_grid_dimensions(Partners, Height, Width):
     if Height * Width < len(Names):
         print("Error: Not enough seats")
         sys.exit(3)
@@ -155,10 +155,9 @@ def get_grid_dimensions(Partners, Height, Width, Names):
         xCords.append(num)
     for num in range(Height):
         yCords.append(num)
-    return [xCords, yCords]
 
 # Cleanse compatibles of logical impossibilities
-def fix_compatibles(C, Partners, HI, Width):
+def fix_compatibles(C, Partners, HI):
 
     # Ensure each student only has two compatible partners.
     counts = {}
@@ -187,7 +186,7 @@ def fix_compatibles(C, Partners, HI, Width):
             OtherS = pair[1]
             Counter = 0
             PreviousStudent = BaseStudent
-            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
+            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C):
                 ProblemFound = True
                 PairToElim = pair
                 break
@@ -195,7 +194,7 @@ def fix_compatibles(C, Partners, HI, Width):
             OtherS = pair[0]
             Counter = 0
             PreviousStudent = BaseStudent
-            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
+            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C):
                 ProblemFound = True
                 PairToElim = pair
                 break
@@ -243,13 +242,13 @@ def fix_compatibles(C, Partners, HI, Width):
         "Removed": Removed
     }
 
-def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
+def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C):
     Buddies = find_buddies(OtherS, C)
     Buddies.remove(PreviousStudent)
     print(f"Counter: {Counter}")
-    print(f"Width: {Width - 4}")
+    print(f"Width: {len(xCords) - 4}")
     # DIVISOR IS ARBITRARY. ADJUST "width - 4" AS NEEDED!
-    if Counter > (Width - 4):
+    if Counter > (len(xCords) - 4):
         print("compatibility strong too long")
         return True
         # Compatibility string too long.
@@ -263,7 +262,7 @@ def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
     Counter += 1
     PreviousStudent = OtherS
     OtherS = Buddies[0]
-    return loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width)
+    return loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C)
 
 
 def find_buddies(OtherS, C):
@@ -335,20 +334,21 @@ def find_contradiction(HI, C, I):
         except ValueError:
             C.remove([pair[1], pair[0]])
 
-def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
+def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I):
     
     # Define width and assignments
+    width = len(xCords)
     Assignments = {}
-    print(Width)
-    print(int(round(Width / 4)))
+    print(width)
+    print(int(round(width / 4)))
 
     # Get margins
     # fix line 361 after
     LeftMargin = []
     RightMargin = []
-    for x in range(int(math.ceil(Width / 4))):
+    for x in range(int(math.ceil(width / 4))):
         LeftMargin.append(x)
-        RightMargin.append((Width - 1) - x)
+        RightMargin.append((width - 1) - x)
     print(f"Left Margin: {LeftMargin}")
     print(f"Right Margin {RightMargin}")
 
@@ -373,7 +373,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         # Place duplicated student on left/right margin
         margins = [LeftMargin, RightMargin]
         shuffle(margins)
-        assigns = place_on_margin(Partners, dupStudent, margins[0], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+        assigns = place_on_margin(Partners, dupStudent, margins[0], HI_C_F, HI_F, HI_C, C, F)
         for student in assigns:
             Assignments[student] = assigns[student]
 
@@ -396,7 +396,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         # Place other students in other margin
         for S in otherSf:
             while True:
-                assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+                assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F)
                 repeats = False
                 for student in assigns:
                     if assigns[student] in Assignments.values():
@@ -415,7 +415,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         margins = [LeftMargin, RightMargin]
         shuffle(margins)
         for n in range(2):
-            assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+            assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F)
             for student in assigns:
                 Assignments[student] = assigns[student]
 
@@ -436,7 +436,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                     while True:
                         print("loop1")
                         break_loop = True
-                        assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+                        assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F)
                         for student in assigns:
                             if assigns[student] in Assignments.values():
                                 break_loop = False
@@ -458,7 +458,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                             partner = cple[0]
                     # Place non-HI partner
                     if partner:
-                        if ([xcord + 1, ycord] not in Assignments.values()) and xcord + 1 < Width:
+                        if ([xcord + 1, ycord] not in Assignments.values()) and xcord + 1 < width:
                             Assignments[partner] = [xcord + 1, ycord]
                         elif ([xcord - 1, ycord] not in Assignments.values()) and xcord - 1 >= 0:
                             Assignments[partner] = [xcord - 1, ycord]
@@ -481,7 +481,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         FoundLeftP = False
         FoundRightP = False
         HISxCord = Assignments[S][0]
-        if HISxCord < Width / 2:
+        if HISxCord < width / 2:
             for student in Assignments:
                 if Assignments[student][0] == (HISxCord - 1) and Assignments[student][1] == Assignments[S][1]:
                     LeftP = student
@@ -491,7 +491,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                     if (pair[0] == LeftP and not pair[1] == S) or (pair[1] == LeftP and not pair[0] == S):
                         ToRemove.append(pair)
                 LeftP = None
-        if HISxCord > Width / 2:
+        if HISxCord > width / 2:
             for student in Assignments:
                 if Assignments[student][0] == (HISxCord + 1) and Assignments[student][1] == Assignments[S][1]:
                     RightP = student
@@ -508,8 +508,9 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
             "Edited_C": C,
             "Removed": ToRemove}
 
-def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F, Width, yCords):
+def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F):
     assigns = {}
+    width = len(xCords)
     while True:
         # Fixed indentation recently
         break_loop = True
@@ -518,9 +519,9 @@ def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F, Width, 
         # NEW DEVELOPMENT: Biased the front lists to increase odds of first row.
         x = choice(Margin)
         if Student in HI_F or Student in HI_C_F:
-            y = choice([0, 0, 0, 0, 1])
+            y = choice([0, 1, 1, 1, 1])
         elif front_partner_check(Student, F, C):
-            y = choice([0, 0, 0, 0, 1])
+            y = choice([0, 1, 1, 1, 1])
         else:
             y = choice(yCords)
         assigns[Student] = [x, y]
@@ -530,9 +531,9 @@ def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F, Width, 
             xLS = x - 1
             xRS = x + 1
             Seats = [xLS, xRS]
-            if xLS < 0 or xLS > (Width - 1):
+            if xLS < 0 or xLS > (width - 1):
                 Seats.remove(xLS)
-            if xRS < 0 or xRS > (Width - 1):
+            if xRS < 0 or xRS > (width - 1):
                 Seats.remove(xRS)
             for pair in C:
                 if not Seats and (pair[1] == Student or pair[0] == Student):
@@ -598,7 +599,7 @@ def C_check(Assignments, C):
             return False
     return True
 
-def phase_two(Partners, C_F, F, C, Assignments, xCords):
+def phase_two(Partners, C_F, F, C, Assignments):
     # Remember to clear P2Assignments and restart if impossibilities are detected
 
     # Place the C_F students
@@ -613,7 +614,7 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
             if (S not in Assignments) and (S not in P2Assignments):
                 while True:
                     xCord = choice(xCords)
-                    yCord = choice([0, 0, 0, 0, 1])
+                    yCord = choice([0, 1, 1, 1, 1])
                     LS = [(xCord - 1), yCord]
                     RS = [(xCord + 1), yCord]
                     LeftRight = [LS, RS]
@@ -673,7 +674,7 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
         if (S not in Assignments) and (S not in P2Assignments):
             while True:
                 xCord = choice(xCords)
-                yCord = choice([0, 0, 0, 0, 1])
+                yCord = choice([0, 1, 1, 1, 1])
                 if ([xCord, yCord] not in Assignments.values()) and ([xCord, yCord] not in P2Assignments.values()):
                     P2Assignments[S] = [xCord, yCord]
                     break
@@ -695,7 +696,7 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
         "P2Assignments": Combined
         }
 
-def phase_three(Partners, C, P2Assignments, xCords, yCords):
+def phase_three(Partners, C, P2Assignments):
     # Place remaining C partners with their partners. If ever impossible, restart.
     # Place remaining unplaced students randomly
     # Perform final I, F, C, and HI checks
@@ -805,7 +806,7 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
 
 # Place the incompatible pairs semi-randomly. Rerun if impossibility is found.
 # HI pairs are being replaced!!!!!!!!
-def phase_four(P3Assignments, I, xCords, yCords):
+def phase_four(P3Assignments, I):
 
     while True:
 
@@ -935,7 +936,7 @@ def phase_four(P3Assignments, I, xCords, yCords):
 
     return Combined
 
-def phase_five(P4Assignments, xCords, yCords, Names):
+def phase_five(P4Assignments):
     AvailableCoords = []
     for x in xCords:
         for y in yCords:
@@ -949,4 +950,3 @@ def phase_five(P4Assignments, xCords, yCords, Names):
         if Names[S] == "empty":
             Names[S] = choice(AvailableCoords)
             AvailableCoords.remove(Names[S])
-    return Names
