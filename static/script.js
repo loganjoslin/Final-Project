@@ -405,7 +405,7 @@ function save_pair(S1, S2) {
     Name2_cell.classList.add("S");
     Name2_cell.style.width = "33%";
 
-    let row = document.createElement('tr')
+    let row = document.createElement('tr');
     row.appendChild(Name1_cell);
     row.appendChild(Plus);
     row.appendChild(Name2_cell);
@@ -415,18 +415,40 @@ function save_pair(S1, S2) {
     SelectionArea = document.querySelector('#StudentSelection');
     let backgroundColor = window.getComputedStyle(SelectionArea).getPropertyValue('background-color');
 
-    // Add students to proper tables
+    // Add students to proper tables. User cannot input pair as both C and I.
     let GreenBody = document.querySelector('#greenTable');
     let RedBody = document.querySelector('#redTable');
 
     if (backgroundColor == IncompBG) {
-        row.classList.add("redRow");
-        row.style.borderBottom = "1px solid rgba(220,20,60,0.2)";
-        RedBody.appendChild(row);
+        let greenRows = document.querySelectorAll(".greenRow");
+        let inGREEN = false;
+        for (let n = 0; n < greenRows.length; n++) {
+            let contents = greenRows[n].querySelectorAll(".S");
+            if ((S1.innerHTML == contents[0].innerHTML || S1.innerHTML == contents[1].innerHTML) && (S2.innerHTML == contents[0].innerHTML || S2.innerHTML == contents[1].innerHTML)) {
+                inGREEN = true;
+                alert("This pair already exists in your compatibles table. A student pair cannot be both compatible, AND incompatble!");
+            }
+        }
+        if (!inGREEN) {
+            row.classList.add("redRow");
+            row.style.borderBottom = "1px solid rgba(220,20,60,0.2)";
+            RedBody.appendChild(row);
+        }
     } else {
-        row.classList.add("greenRow");
-        row.style.borderBottom = "1px solid rgba(34,139,34,0.2)";
-        GreenBody.appendChild(row);
+        let redRows = document.querySelectorAll(".redRow");
+        let inRED = false;
+        for (let n = 0; n < redRows.length; n++) {
+            let contents = redRows[n].querySelectorAll(".S");
+            if ((S1.innerHTML == contents[0].innerHTML || S1.innerHTML == contents[1].innerHTML) && (S2.innerHTML == contents[0].innerHTML || S2.innerHTML == contents[1].innerHTML)) {
+                inRED = true;
+                alert("This pair already exists in your incompatibles table. A student pair cannot be both compatible, AND incompatble!");
+            }
+        }
+        if (!inRED) {
+            row.classList.add("greenRow");
+            row.style.borderBottom = "1px solid rgba(34,139,34,0.2)";
+            GreenBody.appendChild(row);
+        }
     }
     let rowNum = document.querySelectorAll('tr').length;
     if (rowNum == 10) {

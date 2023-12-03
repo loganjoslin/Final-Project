@@ -11,6 +11,7 @@ app.secret_key = 'Minecraft'
 # Homepage
 @app.route("/", methods=["GET", "POST"])
 def index():
+    session.clear()
     if request.method == "POST":
         nameText = request.form.get("Names")
         Partners = False
