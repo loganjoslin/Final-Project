@@ -27,7 +27,7 @@ def index():
         session['Width'] = int(request.form.get("width"))
         session['Partners'] = Partners
 
-        return render_template("compatibles.html", Names=Names)
+        return render_template("compatibles.html", Names=Names, PartnerMode=Partners)
     elif request.method == "GET":
         return render_template("index.html")
 
@@ -43,7 +43,9 @@ def generate():
     I = lists['Incomps']
     C = lists['Comps']
     F = lists['Fronts']
-    Ass = seating_algorithm(names, height, width, HI, I, C, F, partners)
+    output = seating_algorithm(names, height, width, HI, I, C, F, partners)
+    Ass = output["Ass"]
+    Removed = output["Removed"]
 
     data = {
         "Ass": Ass,
@@ -51,10 +53,15 @@ def generate():
         "Width": width,
         "Partners": partners,
         "Fronts": F,
-        "HI": HI
+        "HI": HI,
+        "Removed": Removed
     }
+    
     print("Generate route called!")
-    session.clear()
     print(f"Session: {session}")
     print("Data to be JSONified:", data)
     return jsonify(data)
+
+@app.route("/change_inputs", methods=["GET"])
+def change_inputs():
+    return render_template("compatibles.html", Names=session['Names'], PartnerMode=session['Partners'])

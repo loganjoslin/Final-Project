@@ -1,45 +1,152 @@
+// Key user input data to be processed in "seating.py" algorithm
 let Fronts = [];
 let HIncomps = [];
 let Comps = [];
 let Incomps = [];
 
-//--
-// Flipping through the first three pages without backend communication (First Half)
-function first_page_change() {
-    document.querySelector('#titleOverall').style.display = 'none';
-    document.querySelector('#dimensions').style.display= 'block';
+
+// == ==
+//// Seamless movement through "index.html" (Page1) == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
+// == ==
+
+function title_to_dimensions() {
+    let ElementsToFadeOut = ["#titleOverall"];
+    let ElementsToFadeIn = ["#dimensions"];
+    fade(ElementsToFadeOut, ElementsToFadeIn);
 }
 
-// Uses "get_dimensions" function to save height/width
-function second_page_change() {
-    get_dimensions();
-    document.querySelector('#dimensions').style.display= 'none';
-    ClassContainer = document.querySelector('.CLASSCONTAINER');
-    console.log(ClassContainer);
-    document.querySelector('#NameList').style.display= 'block';
-}
-
-function get_dimensions() {
-    // Get height and width
-    let height = document.querySelectorAll(".CLASSROW").length;
-    let row = document.querySelector(".CLASSROW");
-    let width = row.querySelectorAll(".col").length;
+function dimensions_to_namelist() {
+    // Save height/width of grid
+    let rows = document.querySelectorAll(".CLASSROW")
+    let height = rows.length;
+    let width = rows[0].querySelectorAll(".col").length;
     // Double width if partnered mode
-    if (document.querySelector(".desk").style.height == "50%") {
+    if (document.querySelector(".desk").style.height == PartnerModeDeskHeight) {
         width *= 2;
     }
     document.querySelector('#InputWidth').value = width;
     document.querySelector('#InputHeight').value = height;
+    // Animation
+    let ElementsToFadeOut = ['#dimensions'];
+    let ElementsToFadeIn = ['#NameList'];
+    fade(ElementsToFadeOut, ElementsToFadeIn);
 }
 
 
-//--
-// Flipping through the last three pages without backend communication (Second Half)
-// First flip.
-function comps_to_fronts() {
+// == ==
+//// "index.html" buttons/functionality (Page1) == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
+// == ==
 
-    // Save comps + incomps. Copy incomp nodes to Hincomp table.
-    document.querySelector("#InfoTitle").style.display = 'none';
+const max_height = 6
+const min_height = 2
+const max_width = 8
+const min_width = 3
+const PrcntgeOfHeight = 95;
+const PartnerModeDeskHeight = "50%";
+const FullHeight = "100%";
+
+function increase_width() {
+    let rows = document.querySelectorAll(".CLASSROW");
+    let curWidth = rows[0].querySelectorAll(".col").length
+    let col = rows[0].querySelector(".col");
+    if (curWidth < max_width) {
+        for (let x = 0; x < rows.length; x++) {
+            ColumnClone = col.cloneNode(true);
+            rows[x].appendChild(ColumnClone);
+        }
+    }
+}
+
+function decrease_width() {
+    let rows = document.querySelectorAll(".CLASSROW");
+    let curWidth = rows[0].querySelectorAll(".col").length
+    if (curWidth > min_width) {
+        for (let x = 0; x < rows.length; x++) {
+            let col = rows[x].querySelector(".col");
+            rows[x].removeChild(col);
+        }
+    }
+}
+
+// The rows should only take "PrcntgeOfHeight" % 
+// of the total container height. 
+// See "Dimension Selection Page" in "index.html"
+
+function increase_height() {
+    let rows = document.querySelectorAll(".CLASSROW");
+    if (rows.length < max_height) {
+        rowClone = rows[0].cloneNode(true);
+        rowsContainer = document.querySelector(".CLASSCONTAINER");
+        rowsContainer.appendChild(rowClone);
+        rows = document.querySelectorAll(".CLASSROW");
+        for (let x = 0; x < rows.length; x++) {
+            rows[x].style.height = (PrcntgeOfHeight / rows.length) + "%";
+        }
+    }
+}
+
+function decrease_height() {
+    let rows = document.querySelectorAll(".CLASSROW");
+    if (rows.length > min_height) {
+        rowsContainer = document.querySelector(".CLASSCONTAINER");
+        row = document.querySelector(".CLASSROW");
+        rowsContainer.removeChild(row);
+        rows = document.querySelectorAll(".CLASSROW");
+        for (let x = 0; x < rows.length; x++) {
+            rows[x].style.height = (PrcntgeOfHeight / rows.length) + "%";
+        }
+    }       
+}
+
+// Change between single/partnered desk mode.
+// This affects the algorithm along with class width/layout.
+function toggle_partners() {
+    let desks = document.querySelectorAll(".desk")
+    for (let x = 0; x < desks.length; x++) {
+        icon = desks[x].querySelector(".bi-emoji-smile");
+        iconDUP = icon.cloneNode(true)
+        if (desks[x].style.height == PartnerModeDeskHeight) {
+            desks[x].style.height = FullHeight;
+            desks[x].classList.remove("justify-content-around");
+            desks[x].classList.add("justify-content-center");
+            desks[x].removeChild(icon);
+            document.querySelector('#InputPartners').value = "False";
+        } else {
+            desks[x].style.height = PartnerModeDeskHeight;
+            desks[x].classList.remove("justify-content-center");
+            desks[x].classList.add("justify-content-around");
+            desks[x].appendChild(iconDUP);
+            document.querySelector('#InputPartners').value = "True";
+        }
+    }
+}
+
+// Ensure user inputted name list is not too long
+function check_namelist() {
+    let names = document.querySelector("#nameList").value.split(/[;,\s\n]+/);
+    for (let x = 0; x < names.length; x++) {
+        if (names[x] == '') {
+            names.splice(x, 1);
+        }
+    }
+    let width = parseInt(document.querySelector("#InputWidth").value);
+    let height = parseInt(document.querySelector("#InputHeight").value);
+    if (names.length > height * width) {
+        console.log(names)
+        alert("There are not enough seats for this many students!");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+// == ==
+//// Seamless movement through "compatibles.html" (page2) == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
+// == ==
+
+function comps_to_fronts() {
+    // Save Comp/Incomp pairs.
     let FinalTableBody = document.querySelector("#FinalTableBody");
     let redRows = document.querySelectorAll(".redRow");
     let greenRows = document.querySelectorAll(".greenRow");
@@ -53,8 +160,7 @@ function comps_to_fronts() {
             } else {
                 Comps.push(cleanPair);
             }
-
-            // Saving red rows to Hincomp table
+            // Copy Incomp pairs to HI selection table.
             if (x == 0) {
                 let RowDup = Rows[x][y].cloneNode(true);
                 RowDup.classList.add("FinalRow");
@@ -62,53 +168,315 @@ function comps_to_fronts() {
             }
         }
     }
-
-    // Animations
-    document.querySelector("#compTables").style.display = 'none';
-    document.querySelector("#NextButton").style.display = 'none';
-    document.querySelector("#StudentSelection").style.marginTop = '265px';
-    document.querySelector("#StudentSelection").style.animation = 'topSlide 1s';
-    document.querySelector(".FrontDesc").style.display = "block";
-    document.querySelector(".FrontDesc").style.animation = "fadeIn 1s";
-    setTimeout(function() {
-        document.querySelector("#StudentSelection").style.marginTop = '25px';
-        document.querySelector("#StudentSelection").style.backgroundColor = 'rgba(255, 222, 173, 0.5)';
-        document.querySelector("#StudentSelection").style.border = '2px solid rgba(255, 222, 173, 1.0)';
-        document.querySelector(".FrontDesc").style.opacity = "1";
-    }, 950);
+    // Custom Animation
+    comps_to_fronts_animation();
 }
 
-// Second Flip. Save Fronts.
-// Some of this code is in the HTML
-function save_fronts(SelectedStudents) {
+function fronts_to_HI() {
+    // Save Fronts
     for (let x = 0; x < SelectedStudents.length; x++) {
         Fronts.push(SelectedStudents[x].innerHTML);
     }
-    console.log("Fronts: " + Fronts);
+    // Fade Animations
+    let ElementsToFadeOut = ["#StudentSelectionRow", ".FrontDesc"];
+    let ElementsToFadeIn = ["#FinalTable"];
+    fade(ElementsToFadeOut, ElementsToFadeIn);
+    // Add row selection functionality
+    IncompTableRows = document.querySelectorAll(".FinalRow");
+    for (let x = 0; x < IncompTableRows.length; x++) {
+        IncompTableRows[x].addEventListener("click", select_incomp_pair);
+        IncompTableRows[x].addEventListener("mouseover", mouse_over_HI_pair);
+        IncompTableRows[x].addEventListener("mouseout" , mouse_out_HI_pair);
+    }
 }
 
-// Third Flip. Save HIncomp.
 function HI_to_loading() {
+    // Save HI
     for (let n = 0; n < SelectedRows.length; n++) {
-        pair = SelectedRows[n].querySelectorAll(".S");
-        cleanPair = [pair[0].innerHTML, pair[1].innerHTML];
+        let pair = SelectedRows[n].querySelectorAll(".S");
+        let cleanPair = [pair[0].innerHTML, pair[1].innerHTML];
         HIncomps.push(cleanPair);
     }
-    document.querySelector('#FinalTable').style.animation = "fadeOut 0.5s"
+    // Fade Animations to loading screen
+    let ElementsToFadeOut = ['#FinalTable'];
+    let ElementsToFadeIn = ['#LoadingScreen'];
+    fade(ElementsToFadeOut, ElementsToFadeIn);
+    // Start AJAX request
     setTimeout(function() {
-        document.querySelector('#FinalTable').style.display = 'none';
-        document.querySelector('#LoadingScreen').style.display = 'block';
-        document.querySelector('#LoadingScreen').style.animation = 'fadeIn 0.5s';
-        setTimeout(function() {
-            document.querySelector('#LoadingScreen').style.opacity = '1';
-            send_lists();
-        }, 450);
-    }, 450);
+        send_lists();
+    }, 500);
 }
 
-// Send all our data to the backend with JSON
+
+// == ==
+//// "compatibles.html" buttons/functionality (Page2) == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
+// == ==
+
+const IncompBG = 'rgba(220, 20, 60, 0.1)';
+const CompBG = 'rgba(34, 139, 34, 0.1)';
+const DarkBG = 'rgb(80, 172, 203)';
+const LightBG = 'rgb(173, 216, 230)';
+const DBLclickBorder = '2px solid crimson'
+
+const FrontLimit = 3;
+const RevealNextBtnAt = 8;
+
+let maxChoices = 2;
+let FirstPage = true;
+let IsolateMode = false;
+let SelectedStudents = [];
+let DBLclickSelected = null;
+
+// Reconfigures "select_student()" function for F selection area
+function FrontSwitch() {
+    IsolateMode = false;
+    FirstPage = false;
+    for (let n = 0; n < SelectedStudents.length; n++) {
+        SelectedStudents[n].style.backgroundColor = LightBG;
+    }
+    SelectedStudents = [];
+    DBLclickSelected = null;
+    maxChoices = FrontLimit;
+    comps_to_fronts();
+}
+
+// Selecting Students for C, I, and F.
+function select_student(event) {
+    let selected = event.target;
+    let index = SelectedStudents.indexOf(selected);
+    if (index === -1 && SelectedStudents.length < maxChoices) {
+        selected.style.backgroundColor = DarkBG;
+        SelectedStudents.push(selected);
+    } else if (index !== -1) {
+        selected.style.backgroundColor = LightBG;
+        selected.style.border = "none";
+        SelectedStudents.splice(index, 1);
+            if (selected == DBLclickSelected) {
+            IsolateMode = false;
+            DBLclickSelected = null;
+            }
+    }
+    if (FirstPage && SelectedStudents.length == 2) {
+        save_pair(SelectedStudents[0], SelectedStudents[1]);
+        // Keep the first student selected if in Isolate Mode
+        if (IsolateMode) {
+            SelectedStudents.splice(1, 1);
+        } else {
+            SelectedStudents[0].style.backgroundColor = LightBG;
+            SelectedStudents = [];
+        }
+    }
+}
+
+// Store selected pair in COMP/INCOMP table.
+function save_pair(S1, S2) {
+
+    // Create row with names
+    let Name_cell_1 = document.createElement('td');
+    Name_cell_1.textContent = S1.innerHTML;
+    Name_cell_1.classList.add("S");
+    Name_cell_1.style.width = "33%";
+    let Name_cell_2 = document.createElement('td');
+    Name_cell_2.textContent = S2.innerHTML;
+    Name_cell_2.classList.add("S");
+    Name_cell_2.style.width = "33%";
+    let Plus = document.createElement('td');
+    Plus.textContent = "+";
+    Plus.style.width = "33%";
+    let row = document.createElement('tr');
+    row.appendChild(Name_cell_1);
+    row.appendChild(Plus);
+    row.appendChild(Name_cell_2);
+    row.addEventListener('click', remove_row);
+
+    // Get current background color to determine whether we are in COMPATIBLE or INCOMPATIBLE mode
+    let backgroundColor = window.getComputedStyle(document.querySelector('#StudentSelection')).getPropertyValue('background-color');
+
+    // Adjust values depending on COMPATIBLE or INCOMPATIBLE selection mode
+    let TableBody;
+    let ThisTableRows;
+    let ClassName;
+    let BottomBorderColor;
+    let OtherTableRows;
+    if (backgroundColor == IncompBG) {
+        ClassName = "redRow";
+        TableBody = document.querySelector('#redTable');
+        ThisTableRows = document.querySelectorAll(".redRow");
+        OtherTableRows = document.querySelectorAll(".greenRow");
+        BottomBorderColor = "1px solid rgba(220,20,60,0.2)";      
+    } else {
+        ClassName = "greenRow";
+        TableBody = document.querySelector('#greenTable');
+        ThisTableRows = document.querySelectorAll(".greenRow");
+        OtherTableRows = document.querySelectorAll(".redRow");
+        BottomBorderColor = "1px solid rgba(34,139,34,0.2)";
+    }
+
+    // Filter 1: Block inputs that already exist in either of the tables
+    let counts = {}
+    counts[S1.innerHTML] = 1
+    counts[S2.innerHTML] = 1
+    let AddPair = true;
+    let Both = [ThisTableRows, OtherTableRows];
+    for (let m = 0; m < Both.length; m++) {
+        for (let n = 0; n < Both[m].length; n++) {
+            let contents = Both[m][n].querySelectorAll(".S");
+            if ((S1.textContent == contents[0].textContent || S1.textContent == contents[1].textContent) && (S2.textContent == contents[0].textContent || S2.textContent == contents[1].textContent)) {
+                if (m == 0) {
+                    alert("This pair already exists in your table!");
+                } else {
+                    alert("This pair already exists in the other table. Students cannot be both compatible AND incompatible!");
+                }
+                AddPair = false;
+                break;
+            }
+            // Count each comp student for Filter 2
+            // S1 and S2 aren't in the table yet, so I manually added them to the counts
+            // dictionary after initializing it.
+            if (ClassName == "greenRow" && m==0) {
+                for (let o = 0; o < contents.length; o++) {
+                    let name = contents[o].innerHTML.trim();
+                    if (counts[name]) {
+                        counts[name]++;
+                    } else {
+                        counts[name] = 1;
+                    }
+                }
+            }
+        }
+    }
+    // Filter 2: Block inputs that exceed the partner limit
+    let PartnerLimit = 2;
+    if (document.querySelector('#PartnerMode').innerHTML.trim() == "True") {
+        PartnerLimit = 1;
+    }
+    if (AddPair) {
+        for (let name in counts) {
+            console.log("Counts: " + name + ": " + counts[name]);
+            if (counts[name] > PartnerLimit) {
+                if (PartnerLimit == 1) {
+                    alert("Each student may only have 1 compatible partner if the desks are partnered!");
+                } else {
+                    alert("Each student may only have 2 compatible partners");
+                }
+                AddPair = false;
+                break;
+            }
+        }
+    }
+    // Save pair if it passed all the checks
+    if (AddPair) {
+        row.classList.add(ClassName);
+        row.style.borderBottom = BottomBorderColor;
+        TableBody.appendChild(row);    
+    }
+
+    // Display the "next" button once user has made "MinSelectionsForNextBtn" selections
+    let rowNum = document.querySelectorAll('tr').length;
+    if (rowNum == RevealNextBtnAt) {
+        document.querySelector('#NextButton').style.display = 'block';
+        document.querySelector('.tables').style.marginTop = '10px';
+    }
+}
+
+
+// Double click to permanently select a student when chosing INCOMPS
+function isolate_mode(event) {
+    let backgroundColor = window.getComputedStyle(document.querySelector('#StudentSelection')).getPropertyValue('background-color');
+    if (FirstPage && (backgroundColor == IncompBG)) {
+        IsolateMode = true;
+        DBLclickSelected = event.target;
+        DBLclickSelected.style.border = DBLclickBorder;
+        DBLclickSelected.style.backgroundColor = DarkBG;
+        SelectedStudents.push(DBLclickSelected);
+    }
+}
+
+// Highlight in dark blue when hovering over student
+function mouse_over_student(event) {
+    let selected = event.target;
+    if (SelectedStudents.indexOf(selected) === -1) {
+        selected.style.backgroundColor = DarkBG;
+    }
+}
+function mouse_out_student(event) {
+    let selected = event.target;
+    if (SelectedStudents.indexOf(selected) === -1) {
+        selected.style.backgroundColor = LightBG;
+    }
+}
+
+// Deselect all students when user clicks away from grid
+function deselect_all(event) {
+    let buttons = document.querySelectorAll('.student');
+    let ClickedOnButton = false;
+    for (let x = 0; x < buttons.length; x++) {
+        if (buttons[x].contains(event.target)) {
+            ClickedOnButton = true;
+        }
+    }
+    if (!ClickedOnButton) {
+        IsolateMode = false;
+        DBLclickSelected = null;
+        SelectedStudents = [];
+        for (let x = 0; x < buttons.length; x++) {
+            buttons[x].style.backgroundColor = LightBG;
+            buttons[x].style.border = "none";
+        }
+    }
+}
+
+// Remove pair when clicked
+function remove_row(event) {
+    event.currentTarget.remove();
+}
+
+// Selecting students in the Final Table
+let SelectedHIRows = [];
+const SelectedBG = "rgba(220,20,60,0.2)";
+function select_incomp_pair(event) {
+    row = event.currentTarget;
+    if (SelectedHIRows.indexOf(row) === -1 && SelectedHIRows.length < 2) {
+        row.style.backgroundColor = SelectedBG;
+        SelectedHIRows.push(row);
+    } else if (SelectedHIRows.indexOf(row) !== -1) {
+        row.style.backgroundColor = "none";
+        index = SelectedHIRows.indexOf(row);
+        SelectedHIRows.splice(index, 1);
+    }
+}
+function mouse_over_HI_pair(event) {
+    row = event.currentTarget
+    if (SelectedHIRows.indexOf(row) === -1) {
+        row.style.backgroundColor = SelectedBG;
+    }
+}
+function mouse_out_HI_pair(event) {
+    row = event.currentTarget
+    if (SelectedHIRows.indexOf(row) === -1) {
+        row.style.backgroundColor = "none";
+    }
+}
+
+// Switching background colour
+function bg_green() {
+    Container = document.querySelector("#StudentSelection");
+    Container.style.backgroundColor = CompBG;
+    Container.style.border = "2px solid forestgreen";
+}
+function bg_red() {
+    Container = document.querySelector("#StudentSelection");
+    Container.style.backgroundColor = IncompBG;
+    Container.style.border = "2px solid crimson";
+}
+
+
+// == ==
+//// AJAX request and final seating plan generation == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
+// == ==
+
 function send_lists() {
-    // Store all lists
+    // Store user inputted data
     let lists = {
         HIncomps: HIncomps,
         Incomps: Incomps,
@@ -128,10 +496,10 @@ function send_lists() {
                 load_plan(response);
             } else {
                 console.error("Error Sending");
+                // TODO: redirect user if request was unsuccesful
             }
         }
     };
-
     xhr.send(JSON.stringify(lists));
 }
 
@@ -144,27 +512,31 @@ function load_plan(response) {
     let Partners = response['Partners'];
     let F = response["Fronts"];
     let HI = response["HI"];
+
     let rowHeight = (95 / Height) + "%"
     console.log("HI:" + HI);
 
+    // Adjust settings if PARTNERS mode
     let DeskHeight = '100%';
     let DeskNameJustify = 'justify-content-center';
     let jump = 1;
     if (Partners) {
         jump = 2;
-        DeskHeight = '50%';
+        DeskHeight = PartnerModeDeskHeight;
         DeskNameJustify = 'justify-content-around';
-        console.log("Adjusted settingd for partners mode")
+        console.log("Adjusted settings for partners mode")
     }
 
     for (let y = 0; y < Height; y++) {
-        row = document.createElement('div');
-        row.classList.add('row');
+        let row = document.createElement('div');
+        row.classList.add('row', 'planRow');
         row.style.height = rowHeight;
         for (let x = 0; x < Width; x += jump) {
+            // Col element to contain a desk
             let col = document.createElement('div');
             col.classList.add('col', 'd-flex', 'align-items-center', 'justify-content-center', 'p-2', 'p-lg-3');
 
+            // Desk element within individual col
             let desk = document.createElement('div');
             desk.classList.add('d-flex', 'align-items-center', DeskNameJustify);
             desk.style.width = '100%';
@@ -172,6 +544,7 @@ function load_plan(response) {
             desk.style.borderRadius = '10px';
             desk.style.height = DeskHeight;
 
+            // Names in desk
             let NameBox2;
             let NameBox = document.createElement('span');
             NameBox.classList.add("NameBox");
@@ -189,18 +562,8 @@ function load_plan(response) {
                         found = true;
                         if (n == 0) {
                             NameBox.innerHTML = name;
-                            for (let v = 0; v < F.length; v++) {
-                                if (name == F[v]) {
-                                    NameBox.style.backgroundColor = 'rgba(255, 222, 173, 0.7)';
-                                }
-                            }
                         } else {
                             NameBox2.innerHTML = name;
-                            for (let v = 0; v < F.length; v++) {
-                                if (name == F[v]) {
-                                    NameBox.style.backgroundColor = 'rgba(255, 222, 173, 0.7)';
-                                }
-                            }
                         }
                         break;
                     }
@@ -223,6 +586,22 @@ function load_plan(response) {
         PlanContainer.appendChild(row);
     }
 
+    // Highlight Fronts in orange
+    let allRows = PlanContainer.querySelectorAll(".planRow");
+    for (let p = 0; p < allRows.length; p++) {
+        let cols = allRows[p].querySelectorAll(".col");
+        for (let q = 0; q < cols.length; q++) {
+            let desk = cols[q].querySelector("div");
+            let names = desk.querySelectorAll("span");
+            for (let r = 0; r < names.length; r++) {
+                    let nameText = names[r].innerHTML.trim()
+                    if (F.includes(nameText)) {
+                        names[r].style.backgroundColor = "rgba(255, 222, 173, 0.7)";
+                    }
+                }
+            }
+        }
+
     // When all elements are created, display plan==block and display loadingscreen==none
     document.querySelector('#LoadingScreen').style.display = "none";
     PlanContainer.style.display = 'block';
@@ -230,10 +609,32 @@ function load_plan(response) {
     document.querySelector("#redPlusButton").style.display = "none";
     document.querySelector("#greenPlusButton").style.display = "none";
 
+    // Reconfigure+Regenerate buttons
+    document.querySelector("#ResetButtons").style.display = "block";
+    let Removed = response["Removed"];
+    console.log(Removed);
+    if (Removed.length > 0) {
+        document.querySelector("#RemovedPairsDesc").style.display = "block";
+        pairList = document.querySelector("#pairList");
+        for (let c = 0; c < Removed.length; c++) {
+            li = document.createElement("li");
+            li.innerHTML = Removed[c][0] + " and " + Removed[c][1];
+            pairList.appendChild(li);
+        }
+    }
+
+    // Aesthetic Adjustments
+    let RedTableTitle = document.querySelector("#RedTableTitle");
+    let GreenTableTitle = document.querySelector("#GreenTableTitle");
+    RedTableTitle.classList.remove("text-end");
+    RedTableTitle.classList.remove("text-center");
+    GreenTableTitle.classList.remove("text-end");
+    GreenTableTitle.classList.remove("text-center");
+
     // Hover to highlight functionality
     redRows = document.querySelectorAll(".redRow");
     greenRows = document.querySelectorAll(".greenRow");
-    rows = [redRows, greenRows];
+    let rows = [redRows, greenRows];
     for (let t = 0; t < rows.length; t++) {
         for (let u = 0; u < rows[t].length; u++) {
             rows[t][u].addEventListener("mouseover", Highlight);
@@ -287,205 +688,71 @@ function unHighlight(event, F) {
     }
 }
 
-
-//--
-// Classroom Dimensions selection page
-const max_height = 6
-const min_height = 2
-const max_width = 8
-const min_width = 3
-
-function increase_width() {
-    let Rows = document.querySelectorAll(".CLASSROW");
-    let curWidth = Rows[0].querySelectorAll(".col").length
-    let Column = Rows[0].querySelector(".col");
-    if (curWidth < max_width) {
-        for (let x = 0, numRows = Rows.length; x < numRows; x++) {
-            ColumnClone = Column.cloneNode(true);
-            Rows[x].appendChild(ColumnClone);
-        }
+function regenerate_plan() {
+    // Delete old plan
+    let PlanContainer = document.querySelector("#plan");
+    let planRows = PlanContainer.querySelectorAll(".planRow");
+    for (let p = 0; p < planRows.length; p++) {
+        PlanContainer.removeChild(planRows[p]);
     }
-}
 
-function decrease_width() {
-    let Rows = document.querySelectorAll(".CLASSROW");
-    let curWidth = Rows[0].querySelectorAll(".col").length
-    if (curWidth > min_width) {
-        for (let x = 0, numRows = Rows.length; x < numRows; x++) {
-            column = Rows[x].querySelector(".col");
-            Rows[x].removeChild(column);
-        }
+    // Delete old impossible pair list
+    let ul = document.querySelector("#pairList");
+    let lis = ul.querySelectorAll("li");
+    for (let p = 0; p < lis.length; p++) {
+        ul.removeChild(lis[p]);
     }
+
+    // Hide elements for loading screen
+    document.querySelector("#RemovedPairsDesc").style.display = "none";
+    document.querySelector("#ResetButtons").style.display = "none";
+    document.querySelector("#compTables").style.display = "none";
+    document.querySelector("#LoadingScreen").style.display = "block";
+
+    // AJAX request
+    send_lists();
 }
 
-function increase_height() {
-    let rows = document.querySelectorAll(".CLASSROW");
-    let listLength = rows.length;
-    if (listLength < max_height) {
-        row = document.querySelector(".CLASSROW");
-        rowClone = row.cloneNode(true);
-        rowsContainer = document.querySelector(".CLASSCONTAINER");
-        rowsContainer.appendChild(rowClone);
-        rows = document.querySelectorAll(".CLASSROW");
-        listLength = rows.length;
-        for (let x = 0; x < listLength; x++) {
-            rows[x].style.height = (95 / listLength) + "%";
-        }
+
+
+// "Timeout" must be slightly shorter than animation time
+const FadeOutSpecs = "fadeOut 0.25s";
+const FadeInSpecs = "fadeIn 0.25s";
+const TimeOut = 225;
+
+function fade(ElementsOut, ElementsIn) {
+    for (let w = 0; w < ElementsOut.length; w++) {
+        document.querySelector(ElementsOut[w]).style.animation = FadeOutSpecs;
     }
-}
-
-function decrease_height() {
-    let rows = document.querySelectorAll(".CLASSROW");
-    let listLength = rows.length;
-    if (listLength > min_height) {
-        rowsContainer = document.querySelector(".CLASSCONTAINER");
-        row = document.querySelector(".CLASSROW");
-        rowsContainer.removeChild(row);
-        rows = document.querySelectorAll(".CLASSROW");
-        listLength = rows.length;
-        for (let x = 0; x < listLength; x++) {
-            rows[x].style.height = (95 / listLength) + "%";
+    setTimeout(function() {
+        for (let x = 0; x < ElementsOut.length; x++) {
+            document.querySelector(ElementsOut[x]).style.display = "none";
         }
-    }       
-}
-
-function toggle_partners() {
-    let desks = document.querySelectorAll(".desk")
-    for (let x = 0, len = desks.length; x < len; x++) {
-        icon = desks[x].querySelector(".bi-emoji-smile");
-        iconDUP = icon.cloneNode(true)
-        if (desks[x].style.height == "50%") {
-            desks[x].style.height = "100%";
-            desks[x].classList.remove("justify-content-around");
-            desks[x].classList.add("justify-content-center");
-            desks[x].removeChild(icon);
-            document.querySelector('#InputPartners').value = "False";
-        } else {
-            desks[x].style.height = "50%";
-            desks[x].classList.remove("justify-content-center");
-            desks[x].classList.add("justify-content-around");
-            desks[x].appendChild(iconDUP);
-            document.querySelector('#InputPartners').value = "True";
+        for (let y = 0; y < ElementsIn.length; y++) {
+            document.querySelector(ElementsIn[y]).style.opacity = "0";
+            document.querySelector(ElementsIn[y]).style.display = "block";
+            document.querySelector(ElementsIn[y]).style.animation = FadeInSpecs;
         }
-    }
-}
-
-
-
-//--
-// Incomp/compatible student selection page.
-// Some script is stored in the HTML
-const IncompBG = 'rgba(220, 20, 60, 0.1)';
-const CompBG = 'rgba(34, 139, 34, 0.1)';
-
-function bg_green() {
-    Container = document.querySelector("#StudentSelection");
-    Container.style.backgroundColor = CompBG;
-    Container.style.border = "2px solid forestgreen";
-}
-function bg_red() {
-    Container = document.querySelector("#StudentSelection");
-    Container.style.backgroundColor = IncompBG;
-    Container.style.border = "2px solid crimson";
-}
-
-// CLEAN THIS FUNCTION
-function save_pair(S1, S2) {
-    let Name1_cell = document.createElement('td');
-    Name1_cell.textContent = S1.innerHTML;
-    Name1_cell.classList.add("S");
-    Name1_cell.style.width = "33%";
-
-    let Plus = document.createElement('td');
-    Plus.textContent = "+";
-    Plus.style.width = "33%";
-
-    let Name2_cell = document.createElement('td');
-    Name2_cell.textContent = S2.innerHTML;
-    Name2_cell.classList.add("S");
-    Name2_cell.style.width = "33%";
-
-    let row = document.createElement('tr');
-    row.appendChild(Name1_cell);
-    row.appendChild(Plus);
-    row.appendChild(Name2_cell);
-    row.addEventListener('click', remove_row);
-
-    // Find current selecction area background color to appoint students properly.
-    SelectionArea = document.querySelector('#StudentSelection');
-    let backgroundColor = window.getComputedStyle(SelectionArea).getPropertyValue('background-color');
-
-    // Add students to proper tables. User cannot input pair as both C and I.
-    let GreenBody = document.querySelector('#greenTable');
-    let RedBody = document.querySelector('#redTable');
-
-    if (backgroundColor == IncompBG) {
-        let greenRows = document.querySelectorAll(".greenRow");
-        let inGREEN = false;
-        for (let n = 0; n < greenRows.length; n++) {
-            let contents = greenRows[n].querySelectorAll(".S");
-            if ((S1.innerHTML == contents[0].innerHTML || S1.innerHTML == contents[1].innerHTML) && (S2.innerHTML == contents[0].innerHTML || S2.innerHTML == contents[1].innerHTML)) {
-                inGREEN = true;
-                alert("This pair already exists in your compatibles table. A student pair cannot be both compatible, AND incompatble!");
+        setTimeout(function() {
+            for (let z = 0; z < ElementsIn.length; z++) {
+                document.querySelector(ElementsIn[z]).style.opacity = "1";
             }
-        }
-        if (!inGREEN) {
-            row.classList.add("redRow");
-            row.style.borderBottom = "1px solid rgba(220,20,60,0.2)";
-            RedBody.appendChild(row);
-        }
-    } else {
-        let redRows = document.querySelectorAll(".redRow");
-        let inRED = false;
-        for (let n = 0; n < redRows.length; n++) {
-            let contents = redRows[n].querySelectorAll(".S");
-            if ((S1.innerHTML == contents[0].innerHTML || S1.innerHTML == contents[1].innerHTML) && (S2.innerHTML == contents[0].innerHTML || S2.innerHTML == contents[1].innerHTML)) {
-                inRED = true;
-                alert("This pair already exists in your incompatibles table. A student pair cannot be both compatible, AND incompatble!");
-            }
-        }
-        if (!inRED) {
-            row.classList.add("greenRow");
-            row.style.borderBottom = "1px solid rgba(34,139,34,0.2)";
-            GreenBody.appendChild(row);
-        }
-    }
-    let rowNum = document.querySelectorAll('tr').length;
-    if (rowNum == 10) {
-        document.querySelector('#NextButton').style.display = 'block';
-        document.querySelector('.tables').style.marginTop = '10px';
-    }
-}
-// Remove incomp pair in Student Selection page
-function remove_row(event) {
-    event.currentTarget.remove();
+        }, TimeOut);
+    }, TimeOut);
 }
 
-
-
-//--
-// Selecting students in the Final Table
-SelectedRows = [];
-function select_incomp_pair(event) {
-    row = event.currentTarget;
-    if (SelectedRows.indexOf(row) === -1 && SelectedRows.length < 2) {
-        row.style.backgroundColor = "rgba(220,20,60,0.2)";
-        SelectedRows.push(row);
-    } else if (SelectedRows.indexOf(row) !== -1) {
-        row.style.backgroundColor = "rgba(220,20,60,0.0)";
-        index = SelectedRows.indexOf(row);
-        SelectedRows.splice(index, 1);
-    }
-}
-function mouse_over_incomp(event) {
-    row = event.currentTarget
-    if (SelectedRows.indexOf(row) === -1) {
-        row.style.backgroundColor = "rgba(220,20,60,0.2)";
-    }
-}
-function mouse_out_incomp(event) {
-    row = event.currentTarget
-    if (SelectedRows.indexOf(row) === -1) {
-        row.style.backgroundColor = "rgba(220,20,60,0.0)";
-    }
+function comps_to_fronts_animation() {
+    document.querySelector("#InfoTitle").style.display = 'none';
+    document.querySelector("#compTables").style.display = 'none';
+    document.querySelector("#NextButton").style.display = 'none';
+    document.querySelector("#StudentSelection").style.marginTop = '265px';
+    document.querySelector("#StudentSelection").style.animation = 'topSlide 1s';
+    document.querySelector(".FrontDesc").style.display = "block";
+    document.querySelector(".FrontDesc").style.animation = "fadeIn 1s";
+    setTimeout(function() {
+        document.querySelector("#StudentSelection").style.marginTop = '25px';
+        document.querySelector("#StudentSelection").style.backgroundColor = 'rgba(255, 222, 173, 0.5)';
+        document.querySelector("#StudentSelection").style.border = '2px solid rgba(255, 222, 173, 1.0)';
+        document.querySelector(".FrontDesc").style.opacity = "1";
+    }, 950);
 }

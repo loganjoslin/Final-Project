@@ -24,18 +24,17 @@ import math
 
 def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
 
-    Names = load_names(dirtyNames)
-
-    dims = get_grid_dimensions(Partners, Height, Width, Names)
-    xCords = dims[0]
-    yCords = dims[1]
-
-    # Clear potential logical impossibilies
+    # Clear potential logical impossibilies in C
     output = fix_compatibles(dirtyC, Partners, HI, Width)
     C = output["C"]
     Removed1 = output["Removed1"]
     Removed2 = output["Removed2"]
     find_contradictions(HI, C, I)
+
+    Names = load_names(dirtyNames)
+    dims = get_grid_dimensions(Partners, Height, Width, Names)
+    xCords = dims[0]
+    yCords = dims[1]
 
     # Find and store students who exist in multiple categories.
     MCS = get_MCS(HI, C, F)
@@ -139,7 +138,12 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
     print(f"Removed due to 'HI: (a,b) C: (a, e) (b, e)' impossibility: {Removed1}")
     print(f"Removed due to loop/comp string overstretch: {Removed2}")
     print(f"Removed due to outer margin impossibility: {Removed3}")
-    return Names
+
+    AllRemoved = Removed1 + Removed2 + Removed3
+    return {
+        "Ass": Names,
+        "Removed": AllRemoved
+    }
 
 def load_names(dirtyNames):
     Names = {}
@@ -243,8 +247,9 @@ def fix_compatibles(C, Partners, HI, Width):
                 PairToElim = pair
                 break
         if ProblemFound:
-            C.remove(PairToElim)
+            print("ProblemFound!")
             Removed2.append(PairToElim)
+            C.remove(PairToElim)
         else:
             break
 
@@ -262,6 +267,7 @@ def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
     print(f"Width: {Width - 4}")
     # DIVISOR IS ARBITRARY. ADJUST "width - 4" AS NEEDED!
     if Counter > (Width - 4):
+        print("String too long!")
         return True
         # String too long
     if not Buddies:
@@ -598,6 +604,8 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
         shuffle(C_F)
         for S in C_F:
             if (S not in Assignments) and (S not in P2Assignments):
+                # Assign coordinates to student if this has not been done
+                # Bias to front row (yCord==0) in chosing yCord
                 while True:
                     xCord = choice(xCords)
                     yCord = choice([0, 0, 0, 0, 1])
@@ -612,35 +620,26 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
                     if [xCord, yCord] not in Assignments.values():
                         P2Assignments[S] = [xCord, yCord]
                         break
+                # A and B have been used to condense this section. A: 1->0 ; B: 0->1 to avoid cpy+paste of several lines.
+                # Place this student's partners beside them.
                 for pair in C:
-                    if pair[0] == S and (pair[1] not in Assignments) and (pair[1] not in P2Assignments):
-                        if (LeftRight[0] not in Assignments.values()) and (LeftRight[0] not in P2Assignments.values()):
-                            P2Assignments[pair[1]] = LeftRight[0]
-                        elif len(LeftRight) > 1 and (LeftRight[1] not in Assignments.values()) and (LeftRight[1] not in P2Assignments.values()):
-                            P2Assignments[pair[1]] = LeftRight[1]
-                        else:
-                            escape = False
-                            print("Impossible placement of C_F partner. Resetting")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[1]][0] == P2Assignments[S][0] - 1):
-                            escape = False
-                            print("partner fail")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[1]][0] == P2Assignments[S][0] + 1):
-                            escape = False
-                            print("partner fail")
-                    if pair[1] == S and (pair[0] not in Assignments) and (pair[0] not in P2Assignments):
-                        if (LeftRight[0] not in Assignments.values()) and (LeftRight[0] not in P2Assignments.values()):
-                            P2Assignments[pair[0]] = LeftRight[0]
-                        elif len(LeftRight) > 1 and (LeftRight[1] not in Assignments.values()) and (LeftRight[1] not in P2Assignments.values()):
-                            P2Assignments[pair[0]] = LeftRight[1]
-                        else:
-                            escape = False
-                            print("Impossible placement of C_F partner. Resetting")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[0]][0] == P2Assignments[S][0] - 1):
-                            escape = False
-                            print("partner fail")
-                        if Partners and escape and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[0]][0] == P2Assignments[S][0] + 1):
-                            escape = False
-                            print("partner fail")
+                    b = 1
+                    for a in range(2):
+                        if pair[b] == S and (pair[a] not in Assignments) and (pair[a] not in P2Assignments):
+                            if (LeftRight[0] not in Assignments.values()) and (LeftRight[0] not in P2Assignments.values()):
+                                P2Assignments[pair[a]] = LeftRight[0]
+                            elif len(LeftRight) > 1 and (LeftRight[1] not in Assignments.values()) and (LeftRight[1] not in P2Assignments.values()):
+                                P2Assignments[pair[a]] = LeftRight[1]
+                            else:
+                                escape = False
+                                print("Impossible placement of C_F partner. Resetting")
+                            if Partners and escape and (P2Assignments[S][0] % 2 == 0) and (P2Assignments[pair[a]][0] == P2Assignments[S][0] - 1):
+                                escape = False
+                                print("partner fail")
+                            if Partners and escape and (P2Assignments[S][0] % 2 == 1) and (P2Assignments[pair[a]][0] == P2Assignments[S][0] + 1):
+                                escape = False
+                                print("partner fail")
+                        b -= 1
                     if not escape:
                         counter += 1
                         break
@@ -670,7 +669,7 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
                     break
                 print("P2R")
     
-    # Combine Dictionaries
+    # Combine and return assignment dictionaries
     Combined = Combine_Dictionaries(Assignments, P2Assignments)
     return {"FullReset": FullReset,
             "P2Assignments": Combined}
@@ -685,54 +684,33 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
         shuffle(C)
         fullreset = False
         for pair in C:
-
-            # If right is assigned
-            if (pair[1] in P2Assignments or pair[1] in P3Assignments) and (pair[0] not in P2Assignments and pair[0] not in P3Assignments):
-                if pair[1] in P2Assignments:
-                    xPcord = P2Assignments[pair[1]][0]
-                    yPcord = P2Assignments[pair[1]][1]
-                if pair[1] in P3Assignments:
-                    xPcord = P3Assignments[pair[1]][0]
-                    yPcord = P3Assignments[pair[1]][1]
-                LS = [xPcord - 1, yPcord]
-                RS = [xPcord + 1, yPcord]
-                LsideRside = [LS, RS]
-                if xPcord - 1 < 0 or LS in P2Assignments.values() or LS in P3Assignments.values():
-                    LsideRside.remove(LS)
-                if xPcord + 1 > (len(xCords) - 1) or RS in P2Assignments.values() or RS in P3Assignments.values():
-                    LsideRside.remove(RS)
-                if Partners and xPcord % 2 == 0 and LS in LsideRside:
-                    LsideRside.remove(LS)
-                if Partners and xPcord % 2 == 1 and RS in LsideRside:
-                    LsideRside.remove(RS)
-                if not LsideRside:
-                    restart = True
-                else:
-                    P3Assignments[pair[0]] = choice(LsideRside)
-                
-            # If left is assigned
-            if (pair[0] in P2Assignments or pair[0] in P3Assignments) and (pair[1] not in P2Assignments and pair[1] not in P3Assignments):
-                if pair[0] in P2Assignments:
-                    xPcord = P2Assignments[pair[0]][0]
-                    yPcord = P2Assignments[pair[0]][1]
-                if pair[0] in P3Assignments:
-                    xPcord = P3Assignments[pair[0]][0]
-                    yPcord = P3Assignments[pair[0]][1]
-                LS = [xPcord - 1, yPcord]
-                RS = [xPcord + 1, yPcord]
-                LsideRside = [LS, RS]
-                if xPcord - 1 < 0 or LS in P2Assignments.values() or LS in P3Assignments.values():
-                    LsideRside.remove(LS)
-                if xPcord + 1 > (len(xCords) - 1) or RS in P2Assignments.values() or RS in P3Assignments.values():
-                    LsideRside.remove(RS)
-                if Partners and xPcord % 2 == 0 and LS in LsideRside:
-                    LsideRside.remove(LS)
-                if Partners and xPcord % 2 == 1 and RS in LsideRside:
-                    LsideRside.remove(RS)
-                if not LsideRside:
-                    restart = True
-                else:
-                    P3Assignments[pair[1]] = choice(LsideRside)
+            # If ONLY student A is assigned OR Student B right is assigned
+            # Again used Z and N to reduce redundancy.
+            b = 1
+            for a in range(2) :
+                if (pair[a] in P2Assignments or pair[a] in P3Assignments) and (pair[b] not in P2Assignments and pair[b] not in P3Assignments):
+                    if pair[a] in P2Assignments:
+                        xPcord = P2Assignments[pair[a]][0]
+                        yPcord = P2Assignments[pair[a]][1]
+                    if pair[a] in P3Assignments:
+                        xPcord = P3Assignments[pair[a]][0]
+                        yPcord = P3Assignments[pair[a]][1]
+                    LS = [xPcord - 1, yPcord]
+                    RS = [xPcord + 1, yPcord]
+                    LsideRside = [LS, RS]
+                    if xPcord - 1 < 0 or LS in P2Assignments.values() or LS in P3Assignments.values():
+                        LsideRside.remove(LS)
+                    if xPcord + 1 > (len(xCords) - 1) or RS in P2Assignments.values() or RS in P3Assignments.values():
+                        LsideRside.remove(RS)
+                    if Partners and xPcord % 2 == 0 and LS in LsideRside:
+                        LsideRside.remove(LS)
+                    if Partners and xPcord % 2 == 1 and RS in LsideRside:
+                        LsideRside.remove(RS)
+                    if not LsideRside:
+                        restart = True
+                    else:
+                        P3Assignments[pair[0]] = choice(LsideRside)
+                b -= 1
 
             # If no one has been assigned
             if (pair[0] not in P2Assignments) and (pair[1] not in P2Assignments) and (pair[0] not in P3Assignments) and (pair[1] not in P3Assignments):
@@ -818,57 +796,35 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     P4Assignments[S[1]] = RC2
                     Available.remove(RC2)      
 
-            # If left is assigned
-            if ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] not in P3Assignments) and (S[1] not in P4Assignments)):
-                if S[0] in P3Assignments:
-                    RC = P3Assignments[S[0]]
-                if S[0] in P4Assignments:
-                    RC = P4Assignments[S[0]]
-                AsubT = []
-                while True:
-                    for c in Available:
-                        if c not in tried:
-                            AsubT.append(c)
-                    if not AsubT:
-                        escape = False
-                        break
-                    RC2 = choice(AsubT)
-                    if ((abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1)) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
-                        break
-                    else:
-                        tried.append(RC2)
-                    if len(tried) == len(Available):
-                        escape = False
-                        break
-                if escape:
-                    P4Assignments[S[1]] = RC2
-                    Available.remove(RC2)   
-
-            # If right is assigned
-            if ((S[1] in P3Assignments) or (S[1] in P4Assignments)) and ((S[0] not in P3Assignments) and (S[0] not in P4Assignments)):
-                if S[1] in P3Assignments:
-                    RC = P3Assignments[S[1]]
-                if S[1] in P4Assignments:
-                    RC = P4Assignments[S[1]]
-                AsubT = []
-                while True:
-                    for c in Available:
-                        if c not in tried:
-                            AsubT.append(c)
-                    if not AsubT:
-                        escape = False
-                        break
-                    RC2 = choice(AsubT)
-                    if (abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
-                        break
-                    else:
-                        tried.append(RC2)
-                    if len(tried) == len(Available):
-                        escape = False
-                        break
-                if escape:
-                    P4Assignments[S[0]] = RC2
-                    Available.remove(RC2)   
+            # If ONLY left is assigned OR ONLY right is assigned
+            # Uses A and B to reduce redundancy
+            b = 1
+            for a in range(2):
+                if ((S[a] in P3Assignments) or (S[a] in P4Assignments)) and ((S[b] not in P3Assignments) and (S[b] not in P4Assignments)):
+                    if S[a] in P3Assignments:
+                        RC = P3Assignments[S[a]]
+                    if S[a] in P4Assignments:
+                        RC = P4Assignments[S[a]]
+                    AsubT = []
+                    while True:
+                        for c in Available:
+                            if c not in tried:
+                                AsubT.append(c)
+                        if not AsubT:
+                            escape = False
+                            break
+                        RC2 = choice(AsubT)
+                        if ((abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1)) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
+                            break
+                        else:
+                            tried.append(RC2)
+                        if len(tried) == len(Available):
+                            escape = False
+                            break
+                    if escape:
+                        P4Assignments[S[b]] = RC2
+                        Available.remove(RC2)
+                b -= 1
 
             # Both assigned
             if ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] in P3Assignments) or (S[1] in P4Assignments)):
@@ -913,5 +869,7 @@ def phase_five(P4Assignments, xCords, yCords, Names):
     return Names
 
 def Combine_Dictionaries(Dict1, Dict2):
-    Dict1.update(Dict2)
-    return Dict1
+    copy1 = Dict1.copy()
+    copy2 = Dict2.copy()
+    copy1.update(copy2)
+    return copy1

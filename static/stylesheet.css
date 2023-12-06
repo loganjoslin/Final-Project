@@ -43,6 +43,8 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 #LoadingScreen {display:none;opacity:0;}
 #plan {display:none;}
 #PlanTables {display:none;}
+#ResetButtons {display:none;}
+#RemovedPairsDesc {display:none;}
 
 /* Green&Red "+" buttons above comp/incomp tables */
 #redPlusButton {color: crimson;border: 2px solid crimson;height: 35px;}
@@ -73,7 +75,6 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 /* info buttons CHANGE NEXT TO NONE */
 .help {background-color: rgb(173, 216, 230);width:60px;height:55px;border-radius: 50%;}
 .help:hover {background-color: yellow;}
-#NextButton {display:block;height:40px;width:80px;}
 
 /* size modifications for smaller viewports */
 @media (max-width: 1700px) {
