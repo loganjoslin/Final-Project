@@ -5,12 +5,12 @@
     <!--Title containing info buttons-->
     <div id="InfoTitle">
         <div style="background-color:rgba(173, 216, 230, 0.5);" class="d-flex border justify-content-center align-items-center p-4 my-5">
-            <button type='button' class="fs-5 btn m-0 pt-1 help d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#help">
-            <i style="font-size:60px;" class="bi bi-info-circle m-0 p-0"></i>
+            <button type='button' class="btn m-0 pt-1 help d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#help">
+            <i class="bi bi-info-circle m-0 p-0"></i>
              </button>
-            <h1 class="display-1 text-center mx-0 mx-sm-3" >Feed the Algorithm!</h1>
-            <button type='button' class="fs-5 btn m-0 pt-1 help d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#help">
-            <i style="font-size:60px;" class="bi bi-info-circle m-0 p-0"></i>
+            <h1 class="display-1 text-center mx-3 px-0" >Feed the Algorithm!</h1>
+            <button type='button' class="btn m-0 pt-1 help d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#help">
+            <i class="bi bi-info-circle m-0 p-0"></i>
             </button>
         </div>
     </div>
@@ -22,7 +22,7 @@
                 <div id="StudentSelection" class="container-fluid p-3 d-flex justify-content-around flex-wrap">
                     {% for name in Names %}
     
-                        <div style='cursor:pointer;user-select:none;' class="student rounded-pill d-flex justify-content-center align-items-center fs-3">{{ name }}</div>
+                        <div style='cursor:pointer;user-select:none;' class="student rounded-pill d-flex justify-content-center align-items-center">{{ name }}</div>
             
                     {% endfor %}
                 </div>
@@ -37,8 +37,8 @@
         </div>
 
         <!--FINAL PLAN (Placed before tables for ordering reasons)-->
-        <div id="plan" class="container-xxl mt-3">
-            <div class="row text-center mb-3 mb-md-0 p-0" style="height:5%;">
+        <div id="plan" class="mt-3 container-xxl" style="overflow-x:auto;overflow-y:visible;">
+            <div id="FrontLabel" class="row text-center mb-3 mb-md-0 p-0" style="height:5%;">
                 <h3 class="display-6"><i class="bi bi-arrow-up"></i>&nbsp;FRONT&nbsp;<i class="bi bi-arrow-up"></i><h3>
             </div>
         </div>
@@ -52,15 +52,24 @@
                 <div class="col-6 col-md-5">
                     <div class="d-flex mx-4 flex-column">
                         <div class="d-flex justify-content-center align-items-center mb-1">
-                            <h5 id="RedTableTitle" style="color:crimson;" class="mt-1 fw-bold fs-5 text-end">Incompatible Students</h5>
+                            <h5 id="RedTableTitle" style="color:crimson;" class="mt-1 fw-bold text-end">Incompatible Students</h5>
                             <button onclick="bg_red()" id="redPlusButton" class="btn p-0 px-1 mx-2">
                             <i class="h4 bi bi-plus-lg"></i>
                             </button>
                         </div>
-                        <table style='cursor:default;user-select:none;' class="table table-hover text-center">
-                            <tbody id="redTable" style="border-top:2px solid crimson">
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table style='cursor:default;user-select:none;' class="table table-hover text-center">
+                                <tbody id="redTable" style="border-top:2px solid crimson">
+                                    {% for pair in I %}
+                                        <tr class="redRow">
+                                            <td class="S">{{ pair[0] }}</td>
+                                            <td>+</td>
+                                            <td class="S">{{ pair[1] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
         
@@ -70,12 +79,21 @@
                             <button onclick="bg_green()" id="greenPlusButton" class="btn p-0 px-1 mx-2">
                             <i class="h4 bi bi-plus-lg"></i>
                             </button>
-                            <h5 id="GreenTableTitle" style="color:forestgreen;" class="mt-1 fw-bold fs-5 text-start">Compatible Students</h5>
+                            <h5 id="GreenTableTitle" style="color:forestgreen;" class="mt-1 fw-bold text-start">Compatible Students</h5>
                         </div>
-                        <table style='cursor:default;user-select:none;' class="table table-hover text-center">
-                            <tbody id="greenTable" style="border-top:2px solid forestgreen">
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table style='cursor:default;user-select:none;' class="table table-hover text-center">
+                                <tbody id="greenTable" style="border-top:2px solid forestgreen">
+                                    {% for pair in C %}
+                                        <tr class="greenRow">
+                                            <td class="S">{{ pair[0] }}</td>
+                                            <td>+</td>
+                                            <td class="S">{{ pair[1] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -86,8 +104,8 @@
             <div class="col-10 offset-1 col-md-6 offset-md-3 d-flex flex-column justify-content-center align-items-center">
                 <h1>Keep'em in Sight</h1>
                 <p>
-                    Chose up to three students to be placed near the front of the class. In the final plan, these
-                    students will be placed in the front two rows.
+                    Chose up to three students to be placed near the front of the class. These
+                    students will be positioned in the first two rows of the final plan.
                 </p>
                 <button onclick="fronts_to_HI()" id="SecondNextButton" class="btn btn-dark">Next</button>
             </div>
@@ -98,16 +116,15 @@
             <div class="col-10 offset-1 col-md-6 offset-md-3 d-flex flex-column justify-content-center align-items-center">
                 <div class="text-center mt-5">
                     <h1>Final Step</h1>
-                    <p>From your list of incompatible student pairs below, chose two pairs who are
-                    HIGHLY INCOMPATIBLE. As always, you can chose the same student twice! This is the final
-                    step before your plan may be generated.
+                    <p>From your list of incompatible student pairs below, chose up to two pairs who are
+                    HIGHLY INCOMPATIBLE. This is the final step before your plan may be generated.
                     </p>
                 </div>
                 <table style='cursor:pointer;user-select:none;' class="table text-center">
                     <tbody id="FinalTableBody" style="border-top:1px solid rgba(220,20,60,0.2)">
                     </tbody>
                 </table>
-                <button onclick="HI_to_loading()" class="btn btn-dark mt-3">Create Plan</button>
+                <button onclick="HI_to_loading()" class="btn btn-dark mt-3 mb-5">Create Plan</button>
             </div>
         </div>
 
@@ -120,12 +137,12 @@
             <hr style="height:2px;color:#333;opacity:1;">
             <div class="d-flex justify-content-start my-3">
                 <button onclick="regenerate_plan()" class="btn btn-dark">Regenerate</button>
-                <a href="/change_inputs"><button type="submit" class="btn btn-dark mx-2">Change Inputs</button></a>
+                <a href="/setup"><button type="submit" class="btn btn-dark mx-2">Change Inputs</button></a>
                 <a href="/"><button class="btn btn-dark">Restart</button></a>
             </div>
             <p id="RemovedPairsDesc">
                 Some compatible pairs needed to be removed due to logical impossibilities.
-                If you wish to learn more about this, visit the "More Info" tab in the navigation bar. You can also regenrate the plan or
+                If you wish to learn more about this, visit the "README.MD" file. You can also regenerate the plan or
                 change your inputs to try for different/less pair omissions. These pairs were removed:
             </p>
             <ul id="pairList">
@@ -138,19 +155,28 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="title">Don't be scared!</h5>
+                    <h3 class="modal-title" id="title">Quick Guide</h3>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Your students have been placed onto the grid for convenience. Chose a table and select as many incompatible/compatible
-                    student pairs as possible. Don't be scared! More input will lead to a better tailored seating plan.
+                    <p>
+                    Your students are now BUTTONS! Chose a table and select as many incompatible/compatible
+                    student pairs as possible. Don't hold back! More input will lead to a better tailored seating plan.
                     </p>
-                    <p>Use the "+" icon to switch between input categories, and click on a pair to remove them from the list. If you have any
-                    questions regarding functionality, please see the "More Details" menu in the navigation bar above.
+                    <p>
+                    If you have any questions regarding functionality, please see the "Seating50 Tutorial" tab in the navigation bar above.
+                    </p>
+                    <p>
+                    <span class="fw-bold">Tip:</span> When chosing Incompatible pairs, double click a student to turn on <span style="font-style:italic;">Isolate Mode</span>.
+                    This will allow you to chose pairs much more quickly. Also, use the "+" icon to switch between input categories, and click 
+                    on a table row to remove it from the list.
+                    </p>
+                    <p>
+                        <span class="fw-bold">PS:</span> You will not be able to continue until you've made enough selections.
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -160,18 +186,18 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                <h5 class="modal-title" id="title">Are you sure?</h5>
+                <h3 class="modal-title" id="title">Are you sure?</h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                 <p>
-                    More inputs, better seating! Make sure you have selected EVERY incompatible/compatible pair that you
-                    would like to see in the final plan.
+                The More the Merrier! Make sure you have selected EVERY incompatible/compatible pair that you
+                would like to see in the final plan.
                 </p>
                 </div>
                 <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">More Pairs</button>
-                <button onclick="FrontSwitch()" type="button" class="btn btn-secondary" data-bs-dismiss="modal">That's Everyone!</button>
+                <button onclick="FrontSwitch()" type="button" class="btn btn-primary" data-bs-dismiss="modal">That's Everyone!</button>
                 </div>
             </div>
         </div>
@@ -181,8 +207,9 @@
     <script>
     // JS for student/information button selection and hovering.
     
-    // Plant event listeners on all buttons
+    // Prepare page and plant event listeners on all buttons
     document.addEventListener('DOMContentLoaded',function() {
+        give_name_size();
         let students = document.querySelectorAll('.student');
         let info = document.querySelectorAll('.help');
         for (let x = 0; x < students.length; x++) {
@@ -192,13 +219,18 @@
         students[x].addEventListener('dblclick', isolate_mode);
         }
         document.addEventListener('click', deselect_all);
-    });
-    
-    // Trigger help modal upon opening the page
-    window.onload = function() {
+
+        let TableRows = document.querySelectorAll("tr");
+        for (let x = 0; x < TableRows.length; x++) {
+            TableRows[x].addEventListener("click", remove_row)
+        }
+        if (TableRows.length > 0) {
+            document.querySelector("#NextButton").style.display = "block";
+        }
+
         let Modal = new bootstrap.Modal(document.querySelector("#help"));
         Modal.show();
-    }
+    });
     </script>
 
 {% endblock %}

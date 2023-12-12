@@ -38,11 +38,11 @@ function dimensions_to_namelist() {
 // == ==
 
 const max_height = 6
-const min_height = 2
+const min_height = 3
 const max_width = 8
 const min_width = 3
 const PrcntgeOfHeight = 95;
-const PartnerModeDeskHeight = "50%";
+const PartnerModeDeskHeight = "60%";
 const FullHeight = "100%";
 
 function increase_width() {
@@ -122,22 +122,42 @@ function toggle_partners() {
 }
 
 // Ensure user inputted name list is not too long
+const MinimumNames = 8;
 function check_namelist() {
     let names = document.querySelector("#nameList").value.split(/[;,\s\n]+/);
+    let numlist = []
+    // Remove empty names
     for (let x = 0; x < names.length; x++) {
         if (names[x] == '') {
-            names.splice(x, 1);
+            numlist.push(x)
         }
+    }
+    for (let y = 0; y < numlist.length; y++) {
+        names.splice(numlist[y], 1);
     }
     let width = parseInt(document.querySelector("#InputWidth").value);
     let height = parseInt(document.querySelector("#InputHeight").value);
     if (names.length > height * width) {
-        console.log(names)
         alert("There are not enough seats for this many students!");
         return false;
-    } else {
-        return true;
+    } else if (names.length < MinimumNames) {
+        alert("You must input at least " + MinimumNames + " names!");
+        return false;
     }
+    let counts = {};
+    for (let z = 0; z < names.length; z++) {
+        if (!counts[names[z]]) {
+            counts[names[z]] = 1;
+        } else {
+            alert("You inputted '" + names[z] + "' more than once! Try adding this student's lastname with a dot.");
+            return false;
+        }
+        if (names[z].length > 10) {
+            alert("' " + names[z] + " ' is too long. Try to abbreviate names that are longer than 10 characters.");
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -184,7 +204,7 @@ function fronts_to_HI() {
     // Add row selection functionality
     IncompTableRows = document.querySelectorAll(".FinalRow");
     for (let x = 0; x < IncompTableRows.length; x++) {
-        IncompTableRows[x].addEventListener("click", select_incomp_pair);
+        IncompTableRows[x].addEventListener("click", select_HI_pair);
         IncompTableRows[x].addEventListener("mouseover", mouse_over_HI_pair);
         IncompTableRows[x].addEventListener("mouseout" , mouse_out_HI_pair);
     }
@@ -192,8 +212,8 @@ function fronts_to_HI() {
 
 function HI_to_loading() {
     // Save HI
-    for (let n = 0; n < SelectedRows.length; n++) {
-        let pair = SelectedRows[n].querySelectorAll(".S");
+    for (let n = 0; n < SelectedHIRows.length; n++) {
+        let pair = SelectedHIRows[n].querySelectorAll(".S");
         let cleanPair = [pair[0].innerHTML, pair[1].innerHTML];
         HIncomps.push(cleanPair);
     }
@@ -219,13 +239,30 @@ const LightBG = 'rgb(173, 216, 230)';
 const DBLclickBorder = '2px solid crimson'
 
 const FrontLimit = 3;
-const RevealNextBtnAt = 8;
+const MaxIncompPairAreaDivisor = 2;
+const MaxCompPairAreaDivisor = 2;
+const NxtBtnDivisor = 2.5;
 
 let maxChoices = 2;
 let FirstPage = true;
 let IsolateMode = false;
 let SelectedStudents = [];
 let DBLclickSelected = null;
+
+// Give SHORT, MEDIUM, and LONG classes to student names for responsiveness
+function give_name_size() {
+    let students = document.querySelectorAll(".student")
+    for (let x = 0; x < students.length; x++) {
+        let nameLength = students[x].innerHTML.length;
+        if (nameLength > 7) {
+            students[x].classList.add("LONG");
+        } else if (nameLength > 5 && nameLength <= 7) {
+            students[x].classList.add("MEDIUM");
+        } else {
+            students[x].classList.add("SHORT");
+        }
+    }
+}
 
 // Reconfigures "select_student()" function for F selection area
 function FrontSwitch() {
@@ -290,7 +327,8 @@ function save_pair(S1, S2) {
     row.addEventListener('click', remove_row);
 
     // Get current background color to determine whether we are in COMPATIBLE or INCOMPATIBLE mode
-    let backgroundColor = window.getComputedStyle(document.querySelector('#StudentSelection')).getPropertyValue('background-color');
+    let SelectionGrid = document.querySelector('#StudentSelection');
+    let backgroundColor = window.getComputedStyle(SelectionGrid).getPropertyValue('background-color');
 
     // Adjust values depending on COMPATIBLE or INCOMPATIBLE selection mode
     let TableBody;
@@ -312,7 +350,8 @@ function save_pair(S1, S2) {
         BottomBorderColor = "1px solid rgba(34,139,34,0.2)";
     }
 
-    // Filter 1: Block inputs that already exist in either of the tables
+    // Filter 1:
+    // If COMPS: Block inputs that already exist in either of the tables
     let counts = {}
     counts[S1.innerHTML] = 1
     counts[S2.innerHTML] = 1
@@ -321,7 +360,8 @@ function save_pair(S1, S2) {
     for (let m = 0; m < Both.length; m++) {
         for (let n = 0; n < Both[m].length; n++) {
             let contents = Both[m][n].querySelectorAll(".S");
-            if ((S1.textContent == contents[0].textContent || S1.textContent == contents[1].textContent) && (S2.textContent == contents[0].textContent || S2.textContent == contents[1].textContent)) {
+            if ((S1.textContent == contents[0].textContent || S1.textContent == contents[1].textContent)
+            && (S2.textContent == contents[0].textContent || S2.textContent == contents[1].textContent)) {
                 if (m == 0) {
                     alert("This pair already exists in your table!");
                 } else {
@@ -330,10 +370,10 @@ function save_pair(S1, S2) {
                 AddPair = false;
                 break;
             }
-            // Count each comp student for Filter 2
+            // Count each student in this table for Filter 2
             // S1 and S2 aren't in the table yet, so I manually added them to the counts
             // dictionary after initializing it.
-            if (ClassName == "greenRow" && m==0) {
+            if (m==0) {
                 for (let o = 0; o < contents.length; o++) {
                     let name = contents[o].innerHTML.trim();
                     if (counts[name]) {
@@ -345,15 +385,21 @@ function save_pair(S1, S2) {
             }
         }
     }
-    // Filter 2: Block inputs that exceed the partner limit
+    // Filter 2:
+    // If COMPS: Block inputs that exceed the partner limit
+    // Limit user inputs
     let PartnerLimit = 2;
+    let StudentListLength = document.querySelectorAll(".student").length;
     if (document.querySelector('#PartnerMode').innerHTML.trim() == "True") {
         PartnerLimit = 1;
     }
+    // If INCOMPS: Block inputs that exceed "AREA / MaxIncompPairAreaDivisor" (Arbitrary)
+    let IncompLimit = StudentListLength / MaxIncompPairAreaDivisor;
+
     if (AddPair) {
         for (let name in counts) {
             console.log("Counts: " + name + ": " + counts[name]);
-            if (counts[name] > PartnerLimit) {
+            if (counts[name] > PartnerLimit && ClassName == "greenRow") {
                 if (PartnerLimit == 1) {
                     alert("Each student may only have 1 compatible partner if the desks are partnered!");
                 } else {
@@ -362,8 +408,20 @@ function save_pair(S1, S2) {
                 AddPair = false;
                 break;
             }
+            else if (counts[name] > IncompLimit && ClassName == "redRow") {
+                alert(name + " appears too often in your incomp table!");
+                AddPair = false;
+            }
         }
     }
+    // Filter 3:
+    // IF COMPS: Limit the amount of COMP pairs allowed
+    if (ClassName == "greenRow" && (ThisTableRows.length >= StudentListLength / MaxCompPairAreaDivisor)) {
+        alert("You have inputted too many COMP pairs! Remove a pair from the green table to select another pair.");
+        AddPair = false;
+    }
+
+
     // Save pair if it passed all the checks
     if (AddPair) {
         row.classList.add(ClassName);
@@ -371,9 +429,10 @@ function save_pair(S1, S2) {
         TableBody.appendChild(row);    
     }
 
-    // Display the "next" button once user has made "MinSelectionsForNextBtn" selections
+    // Display the "next" button once user has made "RevealNextBtnAt" selections
     let rowNum = document.querySelectorAll('tr').length;
-    if (rowNum == RevealNextBtnAt) {
+    let RevealNextBtnAt = (StudentListLength / NxtBtnDivisor);
+    if (rowNum >= RevealNextBtnAt) {
         document.querySelector('#NextButton').style.display = 'block';
         document.querySelector('.tables').style.marginTop = '10px';
     }
@@ -383,7 +442,7 @@ function save_pair(S1, S2) {
 // Double click to permanently select a student when chosing INCOMPS
 function isolate_mode(event) {
     let backgroundColor = window.getComputedStyle(document.querySelector('#StudentSelection')).getPropertyValue('background-color');
-    if (FirstPage && (backgroundColor == IncompBG)) {
+    if (FirstPage && (backgroundColor == IncompBG) && !IsolateMode) {
         IsolateMode = true;
         DBLclickSelected = event.target;
         DBLclickSelected.style.border = DBLclickBorder;
@@ -429,32 +488,41 @@ function deselect_all(event) {
 // Remove pair when clicked
 function remove_row(event) {
     event.currentTarget.remove();
+    let rowNum = document.querySelectorAll('tr').length;
+    let StudentListLength = document.querySelectorAll(".student").length;
+    let RevealNextBtnAt = (StudentListLength / NxtBtnDivisor);
+    if (rowNum < RevealNextBtnAt) {
+        document.querySelector('#NextButton').style.display = 'none';
+        document.querySelector('.tables').style.marginTop = '35px';
+    }
 }
 
 // Selecting students in the Final Table
 let SelectedHIRows = [];
-const SelectedBG = "rgba(220,20,60,0.2)";
-function select_incomp_pair(event) {
+const SelectedHIpairBG = "rgba(220, 20, 60, 0.2)";
+const UnSelectedBG = "rgba(220, 20, 60, 0.0)";
+function select_HI_pair(event) {
     row = event.currentTarget;
     if (SelectedHIRows.indexOf(row) === -1 && SelectedHIRows.length < 2) {
-        row.style.backgroundColor = SelectedBG;
+        row.style.backgroundColor = SelectedHIpairBG;
         SelectedHIRows.push(row);
     } else if (SelectedHIRows.indexOf(row) !== -1) {
-        row.style.backgroundColor = "none";
+        row.style.backgroundColor = UnSelectedBG;
         index = SelectedHIRows.indexOf(row);
         SelectedHIRows.splice(index, 1);
     }
 }
 function mouse_over_HI_pair(event) {
+    console.log("Triggered");
     row = event.currentTarget
     if (SelectedHIRows.indexOf(row) === -1) {
-        row.style.backgroundColor = SelectedBG;
+        row.style.backgroundColor = SelectedHIpairBG;
     }
 }
 function mouse_out_HI_pair(event) {
     row = event.currentTarget
     if (SelectedHIRows.indexOf(row) === -1) {
-        row.style.backgroundColor = "none";
+        row.style.backgroundColor = UnSelectedBG;
     }
 }
 
@@ -483,7 +551,10 @@ function send_lists() {
         Comps: Comps,
         Fronts: Fronts
     };
-
+    console.log("HIncomps: " + HIncomps)
+    console.log("Incomps: " + Incomps)
+    console.log("Comps: " + Comps)
+    console.log("Fronts: " + Fronts)
     // Start an AJAX request
     let xhr = new XMLHttpRequest();
     xhr.open('POST', '/generate', true);
@@ -504,8 +575,9 @@ function send_lists() {
 }
 
 // Load the final seating plan based on response from backend
+const DESK_MINWIDTH = 150;
 function load_plan(response) {
-    let PlanContainer = document.querySelector('#plan');
+    // Backend response data
     let Assignments = response['Ass'];
     let Height = response['Height'];
     let Width = response['Width'];
@@ -513,8 +585,8 @@ function load_plan(response) {
     let F = response["Fronts"];
     let HI = response["HI"];
 
-    let rowHeight = (95 / Height) + "%"
-    console.log("HI:" + HI);
+    let PlanContainer = document.querySelector('#plan');
+    let rowHeight = (PrcntgeOfHeight / Height) + "%";
 
     // Adjust settings if PARTNERS mode
     let DeskHeight = '100%';
@@ -527,33 +599,42 @@ function load_plan(response) {
         console.log("Adjusted settings for partners mode")
     }
 
+    // Aesthetic adjustment
+    document.querySelector("#FrontLabel").style.minWidth = (DESK_MINWIDTH * (Width / jump)) + "px";
+
+    // Recreate seating plan in "index.html"
     for (let y = 0; y < Height; y++) {
         let row = document.createElement('div');
-        row.classList.add('row', 'planRow');
+        row.classList.add('row', 'planRow', "flex-nowrap");
         row.style.height = rowHeight;
         for (let x = 0; x < Width; x += jump) {
             // Col element to contain a desk
             let col = document.createElement('div');
             col.classList.add('col', 'd-flex', 'align-items-center', 'justify-content-center', 'p-2', 'p-lg-3');
+            col.style.minWidth = DESK_MINWIDTH + "px";
 
-            // Desk element within individual col
+            // Desk element inside
             let desk = document.createElement('div');
             desk.classList.add('d-flex', 'align-items-center', DeskNameJustify);
             desk.style.width = '100%';
-            desk.style.backgroundColor = 'rgba(173, 216, 230, 0.5)';
+            desk.style.backgroundColor = 'rgba(173, 216, 230, 0.7)';
             desk.style.borderRadius = '10px';
             desk.style.height = DeskHeight;
 
-            // Names in desk
+            // Names in desk (2 names if partnered mode)
             let NameBox2;
             let NameBox = document.createElement('span');
             NameBox.classList.add("NameBox");
+            NameBox.style.maxWidth = "90%";
+            NameBox.style.overflow = "hidden";
             if (Partners) {
                 NameBox2 = document.createElement('span');
                 NameBox2.classList.add("NameBox");
+                NameBox2.style.maxWidth = "90%";
+                NameBox2.style.overflow = "hidden";
             }
 
-            // Find corresponding coordinates in Assignments. If not found, name=empty.
+            // Find name for this coordinate in assignments. If not found, then name="empty".
             for (let n = 0; n < jump; n++) {
                 let found = false;
                 for (let name in Assignments) {
@@ -586,7 +667,7 @@ function load_plan(response) {
         PlanContainer.appendChild(row);
     }
 
-    // Highlight Fronts in orange
+    // Highlight F students in orange BG
     let allRows = PlanContainer.querySelectorAll(".planRow");
     for (let p = 0; p < allRows.length; p++) {
         let cols = allRows[p].querySelectorAll(".col");
@@ -596,20 +677,21 @@ function load_plan(response) {
             for (let r = 0; r < names.length; r++) {
                     let nameText = names[r].innerHTML.trim()
                     if (F.includes(nameText)) {
-                        names[r].style.backgroundColor = "rgba(255, 222, 173, 0.7)";
+                        names[r].style.backgroundColor = FrontsBG;
                     }
                 }
             }
         }
 
-    // When all elements are created, display plan==block and display loadingscreen==none
+    // When all elements are created, hide the loading screen and show the plan
     document.querySelector('#LoadingScreen').style.display = "none";
     PlanContainer.style.display = 'block';
     document.querySelector("#compTables").style.display = "block";
     document.querySelector("#redPlusButton").style.display = "none";
     document.querySelector("#greenPlusButton").style.display = "none";
+    document.querySelector("#compTables").classList.add("mt-5", "mt-md-3");
 
-    // Reconfigure+Regenerate buttons
+    // Reconfigure+Regenerate buttons on bottom of page
     document.querySelector("#ResetButtons").style.display = "block";
     let Removed = response["Removed"];
     console.log(Removed);
@@ -623,15 +705,15 @@ function load_plan(response) {
         }
     }
 
-    // Aesthetic Adjustments
+    // Table aesthetic adjustments
     let RedTableTitle = document.querySelector("#RedTableTitle");
     let GreenTableTitle = document.querySelector("#GreenTableTitle");
     RedTableTitle.classList.remove("text-end");
-    RedTableTitle.classList.remove("text-center");
-    GreenTableTitle.classList.remove("text-end");
-    GreenTableTitle.classList.remove("text-center");
+    RedTableTitle.classList.add("text-center");
+    GreenTableTitle.classList.remove("text-start");
+    GreenTableTitle.classList.add("text-center");
 
-    // Hover to highlight functionality
+    // Hover on row to highlight C and I students
     redRows = document.querySelectorAll(".redRow");
     greenRows = document.querySelectorAll(".greenRow");
     let rows = [redRows, greenRows];
@@ -642,13 +724,12 @@ function load_plan(response) {
                 unHighlight(event, F);
             });
             rows[t][u].removeEventListener("click", remove_row);
-
-            // + Highlight HI rows in RED
+            // Permanenly highlight HI rows in RED
             if (t == 0) {
                 let students = rows[t][u].querySelectorAll(".S");
                 for (let k = 0; k < HI.length; k++) {
                     if ((students[0].innerHTML == HI[k][0] || students[0].innerHTML == HI[k][1]) && (students[1].innerHTML == HI[k][0] || students[1].innerHTML == HI[k][1])) {
-                        rows[t][u].style.backgroundColor = "rgba(220, 20, 60, 0.5)";
+                        rows[t][u].style.backgroundColor = SelectedHIpairBG;
                     }
                 }
             }
@@ -663,6 +744,7 @@ function Highlight(event) {
     let NameBoxes = document.querySelectorAll(".NameBox");
     for (let n = 0; n < NameBoxes.length; n++) {
         if ((StudentPair[0].innerHTML == NameBoxes[n].innerHTML) || (StudentPair[1].innerHTML == NameBoxes[n].innerHTML)) {
+            // Darkened COMP/INCOMP BG colors
             if (HoveredRow.classList.contains("redRow")) {
                 NameBoxes[n].style.backgroundColor = "rgba(220, 20, 60, 0.5)";
             } else {
@@ -671,6 +753,8 @@ function Highlight(event) {
         }
     }
 }
+
+const FrontsBG = "rgba(255, 222, 173, 0.7)";
 function unHighlight(event, F) {
     let UnHoveredRow = event.currentTarget;
     let StudentPair = UnHoveredRow.querySelectorAll(".S");
@@ -678,10 +762,10 @@ function unHighlight(event, F) {
     let NameBoxes = document.querySelectorAll(".NameBox");
     for (let n = 0; n < NameBoxes.length; n++) {
         if ((StudentPair[0].innerHTML == NameBoxes[n].innerHTML) || (StudentPair[1].innerHTML == NameBoxes[n].innerHTML)) {
-            NameBoxes[n].style.backgroundColor = "rgba(173, 216, 230, 0.2)";
+            NameBoxes[n].style.backgroundColor = "rgba(0, 0, 0, 0)";
             for (let z = 0; z < F.length; z++) {
                 if (NameBoxes[n].innerHTML == F[z]) {
-                    NameBoxes[n].style.backgroundColor = 'rgba(255, 222, 173, 0.7)';
+                    NameBoxes[n].style.backgroundColor = FrontsBG;
                 }
             }
         }
@@ -714,11 +798,14 @@ function regenerate_plan() {
 }
 
 
+// == ==
+//// Animations == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
+// == ==
 
+const FadeOutSpecs = "fadeOut 0.10s";
+const FadeInSpecs = "fadeIn 0.10s";
+const TimeOut = 90;
 // "Timeout" must be slightly shorter than animation time
-const FadeOutSpecs = "fadeOut 0.25s";
-const FadeInSpecs = "fadeIn 0.25s";
-const TimeOut = 225;
 
 function fade(ElementsOut, ElementsIn) {
     for (let w = 0; w < ElementsOut.length; w++) {
@@ -746,13 +833,38 @@ function comps_to_fronts_animation() {
     document.querySelector("#compTables").style.display = 'none';
     document.querySelector("#NextButton").style.display = 'none';
     document.querySelector("#StudentSelection").style.marginTop = '265px';
-    document.querySelector("#StudentSelection").style.animation = 'topSlide 1s';
+    document.querySelector("#StudentSelection").style.animation = 'topSlide 0.5s';
     document.querySelector(".FrontDesc").style.display = "block";
-    document.querySelector(".FrontDesc").style.animation = "fadeIn 1s";
+    document.querySelector(".FrontDesc").style.animation = "fadeIn 0.5s";
     setTimeout(function() {
         document.querySelector("#StudentSelection").style.marginTop = '25px';
         document.querySelector("#StudentSelection").style.backgroundColor = 'rgba(255, 222, 173, 0.5)';
         document.querySelector("#StudentSelection").style.border = '2px solid rgba(255, 222, 173, 1.0)';
         document.querySelector(".FrontDesc").style.opacity = "1";
-    }, 950);
+    }, 490);
 }
+
+function ScrollTop() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+}
+
+// function smooth_redirect_transition(path) {
+//     let body = document.querySelector("body");
+//     let elements = body.querySelectorAll("*");
+//     let exclude = body.querySelectorAll(".EFF");
+//     for (let x = 0; x < elements.length; x++) {
+//         let excluded = false;
+//         for (let y = 0; y < exclude.length; y++) {
+//             if (elements[x] == exclude[y]) {
+//                 excluded = true;
+//             }
+//         }
+//         if (!excluded) {
+//             elements[x].style.animation = "fadeOut 0.5s";
+//         }
+//     }
+//     setTimeout(function() {
+//         window.location.href = path;
+//     }, 300);
+// }

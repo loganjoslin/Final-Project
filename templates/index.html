@@ -5,14 +5,13 @@
 
   <!--Title Page-->
   <div id="titleOverall">
-    <div class="container my-2">
-      <div class="row text-center">
-        <h1 id="titleMain" class="text-decoration-underline">Seating50</h1>
-      </div>
-            <!-- Seating50 was created for teachers who seek tranquility and synergy in the classroom. Order is key, and you'll find it here.-->
-      <div id="StartButton" class="row justify-content-center">
+    <div class="container-fluid" style="margin-top:100px;">
+      <!-- Seating50 was created for teachers who seek tranquility and synergy in the classroom. Order is key, and you'll find it here.-->
+      <div class="row flex-column justify-content-center align-items-center text-center">
+          <h1 id="titleMain" class="text-decoration-underline">Seating50</h1>
           <button id="GetStarted" onclick="title_to_dimensions()" class="btn">Get Started</button>
       </div>
+      <a id="credits" href="https://www.freepik.com/">Background designed by Freepik</a>
     </div>
   </div>
 
@@ -20,7 +19,7 @@
 <!--"Front" title takes 5% of container height. The remaining 95% is taken by the rows.-->
   <div id="dimensions">
     <div class="container-xxl mt-3 CLASSCONTAINER">
-      <div class="row text-center mb-3 mb-md-0 p-0" style="height:5%;">
+      <div class="row text-center mb-3 p-0" style="height:5%;">
         <h3 class="display-6"><i class="bi bi-arrow-up"></i>&nbsp;FRONT&nbsp;<i class="bi bi-arrow-up"></i><h3>
       </div>
       <div class="row CLASSROW">
@@ -176,13 +175,13 @@
     <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header d-flex justify-content-center">
-              <h5 class="modal-title" id="title">Are you sure?!</h5>
+              <h3 class="modal-title" id="title">Are you sure?</h3>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
               <p>Your students will be placed according to this layout. Ensure that there is enough space for all your students!</p>
           <div class="modal-footer justify-content-between">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="button" onclick="dimensions_to_namelist()" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
           </div>
         </div>

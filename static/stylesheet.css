@@ -1,5 +1,12 @@
 /* main background */
-body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
+body {
+    background-image: url(images/BG3.jpg);background-attachment: fixed;
+    background-size: cover;
+}
+
+.btn {border:none;}
+.btn:focus {outline: none;box-shadow: none;}
+.btn:hover {background-color: #606b76;}
 
 /* Title Page */
 #titleMain {
@@ -9,13 +16,17 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 #GetStarted {
     background-color: #22262a;
     color: white;
-    border: 2px solid black;
-    width: 150px;
-    height: 50px;
+    width: 200px;
+    height: 66px;
     border-radius: 10px;
-    font-size: 20px;
+    font-size: 30px;
+    margin-top:25px;
 }
-#StartButton {margin-top:20px;}
+#credits {
+    position:fixed;
+    bottom: 0;
+    left: 5px;
+}
 
 /* class dimensions page setup */
 .CLASSROW {height: 23.75%;}
@@ -23,7 +34,7 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 .desk {
     height: 100%;
     width: 100%;
-    background-color: rgba(173, 216, 230, 0.5);
+    background-color: rgba(173, 216, 230, 0.7);
     border-radius: 10px;
 }
 #DimDescription {margin-top:20px;}
@@ -35,7 +46,7 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 
 /*Initial visibiliy of elements for second page*/
 #InfoTitle {display:block;}
-#NextButton {display:block;height:40px;width:80px;}
+#NextButton {display:none;height:40px;width:80px;}
 #compTables {display:block;}
 .FrontDesc {display:none;opacity:0;}
 #SecondNextButton {height:40px;width:80px;}
@@ -53,7 +64,8 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 #greenPlusButton:hover {background-color: #77dd77}
 #redPlusButton:focus, #redPlusButton:active, #greenPlusButton:focus, #redPlusButton:active, .help:focus, .help:active {outline: none !important;box-shadow: none !important;}
 
-/* incomp/comp studetn selection area */
+/* incomp/comp student selection area */
+#InfoTitle i {font-size:60px;}
 .student {
     height: 50px;
     margin: 5px;
@@ -63,62 +75,141 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
     box-sizing: border-box;
     padding: 0;
 }
-
 #StudentSelection {
     border: 2px solid crimson;
     border-radius: 10px;
     background-color: rgba(220, 20, 60, 0.1)
 }
+.SHORT {font-size: 24px;}
+.MEDIUM {font-size: 24px;}
+.LONG {font-size: 22px;}
 
+/* Tables */
 .tables {margin-top:35px;}
+.table-responsive {max-height: 300px;}
+#RedTableTitle, #GreenTableTitle {font-size:25px;}
 
 /* info buttons CHANGE NEXT TO NONE */
 .help {background-color: rgb(173, 216, 230);width:60px;height:55px;border-radius: 50%;}
 .help:hover {background-color: yellow;}
 
+/* Tutorial stylsheet */
+.GreyBG {
+background-color: rgba(158,168,176, 0.2);
+}
+.TutorialIMG {
+    border: 5px solid #515b63;
+    padding: 10px;
+    border-radius: 20px;
+    width: 85%;
+}
+.TutorialIMG2 {
+    width: 90%;
+    border: 5px solid #515b63;
+    padding: 10px;
+    border-radius: 20px;
+}
+#HomeButton {
+    height:70px;
+    width:150px;
+    font-size:18px;
+    margin-top: 25px;
+    border-radius: 10px;
+    border: none;
+}
+
 /* size modifications for smaller viewports */
 @media (max-width: 1700px) {
     .CLASSCONTAINER, #plan {height:800px;}
+    .SHORT {font-size: 22px;}
+    .MEDIUM {font-size: 22px;}
+    .LONG {font-size: 18px;}
 }
 
 @media (max-width: 1200px) {
     #titleMain {font-size: 180px;}
     #GetStarted {
-        width: 130px;
-        height: 43px;
-        font-size: 15px;
+        width: 180px;
+        height: 60px;
+        font-size: 25px;
     }
-    #StartButton {margin-top:20px;}
+    .SHORT {font-size: 22px;}
+    .MEDIUM {font-size: 20px;}
+    .LONG {font-size: 16px;}
+    #RedTableTitle {font-size:22px;}
+    #GreenTableTitle {font-size: 22.5px;}
 }
 
 @media (max-width: 1000px) {
     .CLASSCONTAINER, #plan {height:650px;}
-    .student {height: 40px;margin: 5px;}
     #titleMain {font-size: 140px;}
     #GetStarted {
-        width: 110px;
-        height: 36px;
-        font-size: 12px;
+        width: 160px;
+        height: 53px;
+        font-size: 23px;
+        margin-top: 15px;
     }
-    #StartButton {margin-top:15px;}
+    .SHORT {font-size: 21px;}
+    .MEDIUM {font-size: 20px;}
+    .LONG {font-size: 15px;}
+    #InfoTitle i {font-size:40px;}
+    .help {width:40px;height:40px;border-radius: 50%;}
+}
+
+@media (max-width: 991px) {
+    .TutorialIMG {width:70%;}
+    .TutorialIMG2 {width:70%;}
 }
 
 @media (max-width: 850px) {
-    #titleMain {font-size: 100px;}
+    #titleMain {font-size: 120px;}
     #StartButton {margin-top:10px;}
+    .SHORT {font-size: 20px;}
+    .MEDIUM {font-size: 18px;}
+    .LONG {font-size: 13px;}
+    #GetStarted {
+        width: 140px;
+        height: 46px;
+        font-size: 21px;
+        margin-top: 15px;
+    }
+}
+
+@media (max-width: 720px) {
+    .TutorialIMG {width:100%;}
+    .TutorialIMG2 {width:100%;}
 }
 
 @media (max-width: 700px) {
     .CLASSCONTAINER, #plan {height:500px;}
     .bi-emoji-smile {font-size: 20px;}
     .student {height: 30px; width: 100px;margin: 5px;}
+    .SHORT {font-size: 20px;}
+    .MEDIUM {font-size: 17px;}
+    .LONG {font-size: 10px;}
+    #InfoTitle h1 {font-size:37px;}
+    #titleMain {font-size: 100px;}
+    #GetStarted {
+        width: 120px;
+        height: 40px;
+        font-size: 17px;
+        margin-top: 15px;
+    }
 }
 
 @media (max-width: 500px) {
     .bi-emoji-smile {font-size: 15px;}
-    #titleMain {font-size: 80px}
-    #StartButton {margin-top:5px;}
+    #titleMain {font-size: 90px}
     #DimDescription {margin-top:50px;}
+    .SHORT {font-size: 20px;}
+    .MEDIUM {font-size: 14px;}
+    .LONG {font-size: 10px;}
+    #GetStarted {
+        width: 110px;
+        height: 37px;
+        font-size: 16px;
+        margin-top: 10px;
+    }
 }
 
 /* Imported fonts */
@@ -126,7 +217,7 @@ body {background-image: url(images/WhiteBG.jpg);background-attachment: fixed;}
 
 /* Student Selection Box Animation */
 @keyframes topSlide {
-    from {margin-top: 265px;}
+    from {margin-top: 250px;}
     to {margin-top: 25px;background-color:rgba(255, 222, 173, 0.5);border: 2px solid rgba(255, 222, 173, 1.0);}
 }
 

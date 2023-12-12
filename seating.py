@@ -19,13 +19,15 @@ import math
 
 # Todo:
 # Make README.md and talk about "fix_compatibes()" function
-# Reassess max/min class dimensions
-# Implement comp partner limit in JS
 
+COMMON_REP_LIMIT = 20
+MEDIUM_REP_LIMIT = 100
+HIGH_REP_LIMIT = 500
 def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
-
     # Clear potential logical impossibilies in C
-    output = fix_compatibles(dirtyC, Partners, HI, Width)
+    SIwidthLimit = Width - 4
+    SIwidthLimit2 = Width - 5
+    output = fix_compatibles(dirtyC, Partners, HI, SIwidthLimit)
     C = output["C"]
     Removed1 = output["Removed1"]
     Removed2 = output["Removed2"]
@@ -43,8 +45,19 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
     HI_F = MCS["HI_F"]
     C_F = MCS["C_F"]
 
+    P3FailCounter = 0
+    Removed4 = []
+    Removed5 = []
     # Five "phases" of student placement are repeated until permutation that satisfies all conditions is found.
     while True:
+        # Fix C pairs after P3FailCounter gets sufficiently high
+        shuffle(C)
+        if P3FailCounter > HIGH_REP_LIMIT:
+            output = fix_compatibles_2(C, C_F, SIwidthLimit2)
+            C = output["C"]
+            Removed4.append(output["Removed4"])
+            P3FailCounter = 0
+
         escape_loop = True
         if len(HI) > 0:
             while True:
@@ -79,7 +92,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
                 else:
                     print("Phase 2 did not satisfy the checks. Retrying.")
                     P2Counter += 1
-                if P2Counter >= 20:
+                if P2Counter >= COMMON_REP_LIMIT:
                     escape_loop = False
                     break
 
@@ -92,6 +105,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
                 ResetCheck = output["ResetCheck"]
                 if ResetCheck:
                     print("PHASE 3 FULL RESET")
+                    P3FailCounter += 1
                     escape_loop = False
                     break
                 if I_check(P3Assignments, I) and F_check(P3Assignments, F) and C_check(P3Assignments, C, Partners):
@@ -100,7 +114,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
                 else:
                     print("Phase 3 did not satisfy the checks. Retrying.")
                     P3Counter += 1
-                if P3Counter >= 20:
+                if P3Counter >= COMMON_REP_LIMIT:
                     escape_loop = False
                     break
 
@@ -108,15 +122,24 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         if escape_loop:
             while True:
                 # PHASE 4: Place I pairs with sufficient distance between students.
-                P4Assignments = phase_four(P3Assignments, I, xCords, yCords)
+                output = phase_four(P3Assignments, I, xCords, yCords)
+                P4Assignments = output["Assignments"]
+                ResetCheck = output["ResetCheck"]
+                if ResetCheck:
+                    print("PHASE 4 FULL RESET")
+                    escape_loop = False
+                    ToRemove = choice(I)
+                    I.remove(ToRemove)
+                    Removed5.append(ToRemove)
+                    break
                 if I_check(P4Assignments, I) and F_check(P4Assignments, F) and C_check(P4Assignments, C, Partners):
                     print("Phase 4 was succesful")
                     break
                 else:
                     print("Phase 4 did not satisfy the checks. Retrying.")
                     P4counter += 1
-                if P4counter >= 20:
-                    escape_loop == False
+                if P4counter >= COMMON_REP_LIMIT:
+                    escape_loop = False
                     break
 
         if escape_loop:
@@ -138,8 +161,10 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
     print(f"Removed due to 'HI: (a,b) C: (a, e) (b, e)' impossibility: {Removed1}")
     print(f"Removed due to loop/comp string overstretch: {Removed2}")
     print(f"Removed due to outer margin impossibility: {Removed3}")
+    print(f"Removed due to constant P3 failure: {Removed4}")
+    print(f"Removed due to constant P4 failure: {Removed5}")
 
-    AllRemoved = Removed1 + Removed2 + Removed3
+    AllRemoved = Removed1 + Removed2 + Removed3 + Removed4 + Removed5
     return {
         "Ass": Names,
         "Removed": AllRemoved
@@ -173,7 +198,7 @@ def get_grid_dimensions(Partners, Height, Width, Names):
     return [xCords, yCords]
 
 # Cleanse compatibles of logical impossibilities
-def fix_compatibles(C, Partners, HI, Width):
+def fix_compatibles(C, Partners, HI, SIwidthLimit):
 
     # Student partner count is limitied (IMPLEMENT IN JS)
     counts = {}
@@ -234,7 +259,7 @@ def fix_compatibles(C, Partners, HI, Width):
             OtherS = pair[1]
             Counter = 0
             PreviousStudent = BaseStudent
-            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
+            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, SIwidthLimit):
                 ProblemFound = True
                 PairToElim = pair
                 break
@@ -242,12 +267,11 @@ def fix_compatibles(C, Partners, HI, Width):
             OtherS = pair[0]
             Counter = 0
             PreviousStudent = BaseStudent
-            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
+            if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, SIwidthLimit):
                 ProblemFound = True
                 PairToElim = pair
                 break
         if ProblemFound:
-            print("ProblemFound!")
             Removed2.append(PairToElim)
             C.remove(PairToElim)
         else:
@@ -260,13 +284,11 @@ def fix_compatibles(C, Partners, HI, Width):
     }
 
 # Moves along "strings" of compatible partners and detects when these strings are too long, or impossible to place.
-def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
+def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Limit):
     Buddies = find_buddies(OtherS, C)
     Buddies.remove(PreviousStudent)
-    print(f"Counter: {Counter}")
-    print(f"Width: {Width - 4}")
     # DIVISOR IS ARBITRARY. ADJUST "width - 4" AS NEEDED!
-    if Counter > (Width - 4):
+    if Counter > Limit:
         print("String too long!")
         return True
         # String too long
@@ -279,7 +301,7 @@ def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width):
     Counter += 1
     PreviousStudent = OtherS
     OtherS = Buddies[0]
-    return loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Width)
+    return loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Limit)
 
 # Finds students who are compatible partners of a given student.
 def find_buddies(OtherS, C):
@@ -290,6 +312,53 @@ def find_buddies(OtherS, C):
         if pair[1] == OtherS:
             Buddies.append(pair[0])
     return Buddies
+
+# If P3 fails enough times, remove a random C pair that exists in a COMP string
+def fix_compatibles_2(C, C_F, SIwidthLimit2):
+    # Seperate C pairs to BIAS F students
+    Removed4 = None
+    ProblemFound = False
+    shuffle(C)
+    C_Fpairs = []
+    nonC_Fpairs = []
+    for pair in C:
+        if pair[0] in C_F or pair[1] in C_F:
+            C_Fpairs.append(pair)
+        else:
+            nonC_Fpairs.append(pair)
+    # Iterate through C pairs and remove a pair that belongs to a string
+    while True:
+        for list in [C_Fpairs, nonC_Fpairs]:
+            for pair in list:
+                BaseStudent = pair[0]
+                OtherS = pair[1]
+                Counter = 0
+                PreviousStudent = BaseStudent
+                if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, SIwidthLimit2):
+                    ProblemFound = True
+                    PairToElim = pair
+                if not ProblemFound:
+                    BaseStudent = pair[1]
+                    OtherS = pair[0]
+                    Counter = 0
+                    PreviousStudent = BaseStudent
+                    if loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, SIwidthLimit2):
+                        ProblemFound = True
+                        PairToElim = pair
+                if ProblemFound:
+                    Removed4 = PairToElim
+                    C.remove(PairToElim)
+                    break
+            if ProblemFound:
+                break
+        if not ProblemFound and SIwidthLimit2 > 0:
+            SIwidthLimit2 -= 1
+        else:
+            break
+    return {
+        "C": C,
+        "Removed4": Removed4
+        } 
 
 # Find the "multi-category" students
 def get_MCS(HI, C, F):
@@ -645,7 +714,7 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
                         break
                 if not escape:
                     break
-        if (not escape) and (counter >= 20):
+        if (not escape) and (counter >= COMMON_REP_LIMIT):
             FullReset = True
             escape = True
         if escape:
@@ -677,12 +746,12 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
 # Place remaining C partners with their partners. If ever impossible, restart.
 def phase_three(Partners, C, P2Assignments, xCords, yCords):
     counter = 0
+    fullreset = False
     while True:
         print("loop5")
         P3Assignments = {}
         restart = False
         shuffle(C)
-        fullreset = False
         for pair in C:
             # If ONLY student A is assigned OR Student B right is assigned
             # Again used Z and N to reduce redundancy.
@@ -738,7 +807,7 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
                     P3Assignments[Students[1]] = choice(LsideRside)
             
             # Reset Conditions
-            if counter >= 20:
+            if counter >= COMMON_REP_LIMIT:
                 fullreset = True
                 restart = False
                 break
@@ -756,6 +825,8 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
 
 # Place the incompatible pairs semi-randomly.
 def phase_four(P3Assignments, I, xCords, yCords):
+    counter = 0
+    fullreset = False
     while True:
         # Define available coordinates
         Available = []
@@ -845,11 +916,16 @@ def phase_four(P3Assignments, I, xCords, yCords):
         if escape:
             break
         else:
-            print("Impossibility reached in Phase 4. Retrying.")
+            print(f"Impossibility reached in Phase 4. Retrying. (Counter: {counter})")
+            counter += 1
+        if counter >= MEDIUM_REP_LIMIT:
+            fullreset = True
+            break
     
     # Combine dictionaries
     Combined = Combine_Dictionaries(P3Assignments, P4Assignments)
-    return Combined
+    return {"Assignments": Combined,
+            "ResetCheck": fullreset}
 
 # Randomly assign coordinates to remaining students
 def phase_five(P4Assignments, xCords, yCords, Names):

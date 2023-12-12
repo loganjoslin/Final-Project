@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+
+<div class="container-lg mt-5">
+  <div class="row justify-content-center">
+      <h1 class="text-center display-1 fw-bold">Using Seating50</h1>
+  </div>
+  <div class="row mt-5 justify-content-center align-items-center">
+      <div class="GreyBG col-12 col-lg-5 col-xl-6">
+          <h3 class="display-6">A Quick Overview</h3>
+          <p>
+          A students greatest source of distraction is other students, which is why a well-designed seating plan is essential for 
+          classroom productivity. Creating this perfect plan, however, is much easier said than done.
+          </p>
+          <p>
+          If we break the problem down, however, it is based on some fairly simple conditions. Ie: Some students must be separated, while others 
+          should be combined. Others too, may need to be placed nearer the front of the classroom. That's it!
+          </p>
+          <p>
+          Seating50 will take you through three easy steps, in which you will enter your preferences that pertain to these conditions.
+          The ultimate quality of the outputted plan depends solely on the quantity of inputted information. I thus encourage you to challenge the algorithm!
+          </p>
+      </div>
+      <div class="col-12 col-lg-7 col-xl-6 offset-xl-0 p-2 mt-4 mb-4 mt-lg-2 my-lg-0 text-center">
+          <img class="TutorialIMG" src="../static/images/CompletedPlan.png" alt="exampleImage">
+      </div>
+  </div>
+  <div class="mt-0 mt-lg-4 mt-xxl-0 row justify-content-center align-items-center">
+      <div class="GreyBG col-12 col-lg-9 order-lg-1">
+          <h3 class="display-6">Step 1: Presetting</h3>
+          <p>
+          Seating50 is not designed for all possible seating plans, but it currently accounts for two of the more popular layouts with a range of 
+          dimensional options. On the first page, you will chose your preferred classroom desk arrangement. Use the buttons on the bottom right side of the page to toggle height,
+          width, and Partner Mode. Note: If you chose partnered desks, your students will be limited to a single compatible partner.
+          </p>
+          <p>
+          Next, you must input all student names. Try to separate names with new lines, spaces, commas, and/or semi-colons. If there are 
+          duplicate names, add a dot followed by some initial of the last name to distinguish these. The algorithm will place
+          these names on the grid for the final plan, so we must be able to know who is who!
+          </p>
+      </div>
+      <div class="col-12 col-lg-3 p-2 d-flex flex-column align-items-center align-items-lg-start justify-content-center text-center order-lg-0">
+          <img class="TutorialIMG2 mb-2 mt-4 mt-lg-0" src="../static/images/HeightWidth.png" alt="DimensionButtons">
+          <img class="TutorialIMG2 mt-2 mb-4 mb-lg-0" src="../static/images/names.png" alt="Names">
+      </div>
+  </div>
+  <div class="mt-0 mt-lg-4 mt-xxl-0 row justify-content-center align-items-center">
+      <div class="GreyBG col-12 col-lg-5 col-xl-6">
+          <h3 class="display-6">Step 2: Chosing Pairs</h3>
+          <p>
+          Now, your student names will be disaplayed as a grid of buttons. You will chose as many incompatible and compatible student pairs as you can imagine. Use the "+" buttons to change the input category.
+          Seating50 will try to position compatible pairs beside one another in the final plan, so these should be students who work well together. On the other hand, incompatible 
+          pairs represent those who are unproductive or obstructive, and will thus be separated from eachother.
+          </p>
+          <p>
+          <span class="fw-bold">Tip:</span> When selecting incompatible pairs, you may double click on a student to activate <span style="font-style:italic;">Isolate Mode</span>. This 
+          student will be permanently selected, and any subsequent selections will be added as an incompatible pair with this student. <span style="font-style:italic;">Isolate Mode</span> was made 
+          for the more problematic students who should ideally be separated from several classmates.
+          </p>
+      </div>
+      <div class="col-12 col-lg-7 col-xl-6 offset-xl-0 p-2 my-4 my-lg-0 text-center">
+          <img class="TutorialIMG mb-2" src="../static/images/Pairs.png" alt="Pairs">
+      </div>
+  </div>
+  <div class="mt-0 mt-lg-4 mt-xxl-0 row justify-content-center align-items-center">
+    <div class="GreyBG col-12 col-lg-9 order-lg-1">
+        <h3 class="display-6">Step 3: Fronts and Highly Incompatibles</h3>
+        <p>
+        As a bonus, Seating50 allows users to input two extra smaller lists to be considered by the algorithm. First, you may chose some students to be positioned nearer the front of the class. The maximum amount
+        of these students depends on the width of the classroom. These students will still be placed with consideration to with their compatible and incompatible partners (if possible), but they will be located in the
+        first two rows of the seating plan.
+        </p>
+        <p>
+        Next, you may chose up to two highly incompatible student pairs. The algorithm will try to separate these students on opposite margins of the classroom. There is no requirement for you to chose such pairs,
+        but maximal separation between some students can certainly be helpful in some cases.
+        </p>
+    </div>
+    <div class="col-12 col-lg-3 p-2 d-flex flex-column align-items-center align-items-lg-start justify-content-center text-center order-lg-0">
+        <img class="TutorialIMG2 mb-2 mt-4 mt-lg-0" src="../static/images/HIpairs.png" alt="DimensionButtons">
+        <img class="TutorialIMG2 mt-2" src="../static/images/Fronts.png" alt="Names">
+    </div>
+  </div>
+  <div class="row mt-0 mt-lg-4 mt-xxl-0 mb-5 justify-content-center align-items-center">
+      <div class="order-1 order-lg-0 col-12 col-lg-5 col-xl-6 d-flex flex-column align-items-center">
+          <div class="GreyBG">
+              <h3 class="display-6">Enjoy Your Plan!</h3>
+              <p>
+                You should be presented with a seating plan that meets all of your needs. Highly incompatible students will be highlighted in red, and the front-bound student names will be orange.
+              </p>
+              <p>
+                By hovering over rthe tables, you can see how all your student pairs were ultimately positioned. If any pairs were omitted due to logical impossibilities, you will be notified at the bottom of the page. There, you 
+                will also find some buttons that allow you to regenerate, restart or change your inputs if needed. This was Seating50!
+              </p>
+          </div>
+          <a style="text-decoration:none;" href="/">
+            <button id="HomeButton" class="btn btn-dark d-flex justify-content-center align-items-center text-center">
+              Click for HomePage
+            </button>
+          </a>
+      </div>
+      <div class="order-0 order-lg-1 col-12 col-lg-7 col-xl-6 offset-xl-0 p-2 mb-4 text-center">
+          <img class="TutorialIMG" src="../static/images/FinalPlan.png" alt="exampleImage">
+      </div>
+</div>
+</div>
+
+<footer style="height:75px;background-color:#1F2326;" class="d-flex justify-content-center text-center align-items-center">
+<button onclick="ScrollTop()" style="border:none;" class="btn btn-light">Back To Top</button>
+</footer>
+
+{% endblock %}
