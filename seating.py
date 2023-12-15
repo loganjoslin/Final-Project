@@ -23,73 +23,93 @@ import math
 COMMON_REP_LIMIT = 20
 MEDIUM_REP_LIMIT = 100
 HIGH_REP_LIMIT = 500
+HIGHER_REP_LIMIT = 2000
 def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
     # Clear potential logical impossibilies in C
     SIwidthLimit = Width - 4
     SIwidthLimit2 = Width - 5
     output = fix_compatibles(dirtyC, Partners, HI, SIwidthLimit)
-    C = output["C"]
+    OriginalC = output["C"]
     Removed1 = output["Removed1"]
     Removed2 = output["Removed2"]
-    find_contradictions(HI, C, I)
+    find_contradictions(HI, OriginalC, I)
 
-    Names = load_names(dirtyNames)
-    dims = get_grid_dimensions(Partners, Height, Width, Names)
+    dims = get_grid_dimensions(Partners, Height, Width, dirtyNames)
     xCords = dims[0]
     yCords = dims[1]
 
     # Find and store students who exist in multiple categories.
-    MCS = get_MCS(HI, C, F)
+    MCS = get_MCS(HI, OriginalC, F)
     HI_C_F = MCS["HI_C_F"]
     HI_C = MCS["HI_C"]
     HI_F = MCS["HI_F"]
     C_F = MCS["C_F"]
 
+    IFailCounter = 0
     P3FailCounter = 0
     Removed4 = []
     Removed5 = []
     # Five "phases" of student placement are repeated until permutation that satisfies all conditions is found.
     while True:
+        print(f"IFailCounter: {IFailCounter}")
+        Names = load_names(dirtyNames)
         # Fix C pairs after P3FailCounter gets sufficiently high
-        shuffle(C)
+        shuffle(OriginalC)
         if P3FailCounter > HIGH_REP_LIMIT:
-            output = fix_compatibles_2(C, C_F, SIwidthLimit2)
-            C = output["C"]
-            Removed4.append(output["Removed4"])
+            output = fix_compatibles_2(OriginalC, C_F, SIwidthLimit2)
+            OriginalC = output["C"]
+            if output["Removed4"]:
+                Removed4.append(output["Removed4"])
             P3FailCounter = 0
+        # Overwhelming I pairs list. Neglect a pair.
+        if IFailCounter > HIGHER_REP_LIMIT:
+            I_F_pair = find_IF(I, F)
+            if I_F_pair:
+                I.remove(I_F_pair)
+                Removed5.append(I_F_pair)
+            else:
+                Rand_I_Pair = choice(I)
+                I.remove(Rand_I_Pair)
+                Removed5.append(Rand_I_Pair)
+            IFailCounter = 0
 
+        C = OriginalC.copy()
         escape_loop = True
         if len(HI) > 0:
             while True:
                 # PHASE 1: Separate HI pairs with their partners
                 P1 = phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords)
-                P1Assignments = P1["Assignments"]
-                if I_check(P1Assignments, I) and F_check(P1Assignments, F) and C_check(P1Assignments, C, Partners):
+                Assignments = P1["Assignments"]
+                P1Assignments = Assignments.copy()
+                if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                     print("Phase 1 was succesful")
                     C = P1["Edited_C"]
+                    Removed3 = P1["Removed"]
                     break
                 else:
                     print("Phase 1 did not satisfy the checks. Retrying.")
                 print("loop1")
         else:
-            P1Assignments = {}
+            Assignments = {}
             P1 = {"Removed": []}
-        Removed3 = P1["Removed"]
         
         P2Counter = 0
         if escape_loop:
             while True:
                 # PHASE 2: Place C_F with partners, then F
-                output = phase_two(Partners, C_F, F, C, P1Assignments, xCords)
-                P2Assignments = output["P2Assignments"]
+                output = phase_two(Partners, C_F, F, C, Assignments, xCords)
+                Assignments = output["P2Assignments"]
+                P2Assignments = Assignments.copy()
                 FullReset = output["FullReset"]
                 if FullReset:
                     escape_loop = False
                     break
-                if I_check(P2Assignments, I) and F_check(P2Assignments, F) and C_check(P2Assignments, C, Partners):
+                if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                     print("Phase 2 was succesful")
                     break
                 else:
+                    if not I_check(Assignments, I):              
+                        IFailCounter += 1
                     print("Phase 2 did not satisfy the checks. Retrying.")
                     P2Counter += 1
                 if P2Counter >= COMMON_REP_LIMIT:
@@ -100,18 +120,21 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         if escape_loop:
             while True:
                 # PHASE 3: Place remaining C students with partners
-                output = phase_three(Partners, C, P2Assignments, xCords, yCords)
-                P3Assignments = output["Assignments"]
+                output = phase_three(Partners, C, Assignments, xCords, yCords)
+                Assignments = output["Assignments"]
+                P3Assignments = Assignments.copy()
                 ResetCheck = output["ResetCheck"]
                 if ResetCheck:
                     print("PHASE 3 FULL RESET")
                     P3FailCounter += 1
                     escape_loop = False
                     break
-                if I_check(P3Assignments, I) and F_check(P3Assignments, F) and C_check(P3Assignments, C, Partners):
+                if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                     print("Phase 3 was succesful")
                     break
                 else:
+                    if not I_check(Assignments, I):              
+                        IFailCounter += 1
                     print("Phase 3 did not satisfy the checks. Retrying.")
                     P3Counter += 1
                 if P3Counter >= COMMON_REP_LIMIT:
@@ -122,17 +145,20 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
         if escape_loop:
             while True:
                 # PHASE 4: Place I pairs with sufficient distance between students.
-                output = phase_four(P3Assignments, I, xCords, yCords)
-                P4Assignments = output["Assignments"]
+                print("loop3")
+                output = phase_four(Assignments, I, xCords, yCords)
+                Assignments = output["Assignments"]
+                P4Assignments = Assignments.copy()
                 ResetCheck = output["ResetCheck"]
                 if ResetCheck:
                     print("PHASE 4 FULL RESET")
                     escape_loop = False
                     ToRemove = choice(I)
                     I.remove(ToRemove)
+                    print(f"1Removed: {ToRemove}")
                     Removed5.append(ToRemove)
                     break
-                if I_check(P4Assignments, I) and F_check(P4Assignments, F) and C_check(P4Assignments, C, Partners):
+                if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                     print("Phase 4 was succesful")
                     break
                 else:
@@ -141,12 +167,31 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
                 if P4counter >= COMMON_REP_LIMIT:
                     escape_loop = False
                     break
+        
+        print("loop6")
+        if escape_loop:
+            # PHASE 5: Place remaining neutral students
+            Names = phase_five(Assignments, xCords, yCords, Names)
+            if I_check(Names, I) and F_check(Names, F) and C_check(Names, C, Partners):
+                print("Phase 5 was succesful")
+                break
+            else:
+                print("Phase 5 did not satisfy the checks. Retrying. FULLRESET.")
+                escape_loop = False
+
+            # Lazy Code: Check for dups
+            LastCounts = {}
+            for name in Assignments:
+                if Assignments[name] in LastCounts.values():
+                    print("dups")
+                    escape_loop = False
+                    break
+                else:
+                    LastCounts[name] = Assignments[name]
+            print(f"LASTCOUNTS: {LastCounts}")
 
         if escape_loop:
             break
-
-    # PHASE 5: Place remaining neutral students
-    Names = phase_five(P4Assignments, xCords, yCords, Names)
 
     # Final details
     print(f"\n\nCompatible: {C}")
@@ -162,7 +207,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, I, dirtyC, F, Partners):
     print(f"Removed due to loop/comp string overstretch: {Removed2}")
     print(f"Removed due to outer margin impossibility: {Removed3}")
     print(f"Removed due to constant P3 failure: {Removed4}")
-    print(f"Removed due to constant P4 failure: {Removed5}")
+    print(f"Removed due to constant P4 or P2I failure: {Removed5}")
 
     AllRemoved = Removed1 + Removed2 + Removed3 + Removed4 + Removed5
     return {
@@ -176,10 +221,10 @@ def load_names(dirtyNames):
         Names[name.strip()] = "empty"
     return Names
 
-def get_grid_dimensions(Partners, Height, Width, Names):
+def get_grid_dimensions(Partners, Height, Width, dirtyNames):
     xCords = []
     yCords = []
-    if Height * Width < len(Names):
+    if Height * Width < len(dirtyNames):
         print("Error: Not enough seats")
         sys.exit(1)
     if Height * Width < 15:
@@ -244,6 +289,7 @@ def fix_compatibles(C, Partners, HI, SIwidthLimit):
             if problems:
                 rchoice = choice(problems)
                 C.remove(rchoice)
+                print(f"2Removed: {rchoice}")
                 Removed1.append(rchoice)
             else:
                 break
@@ -274,6 +320,7 @@ def fix_compatibles(C, Partners, HI, SIwidthLimit):
         if ProblemFound:
             Removed2.append(PairToElim)
             C.remove(PairToElim)
+            print(f"3Removed: {PairToElim}")
         else:
             break
 
@@ -348,6 +395,7 @@ def fix_compatibles_2(C, C_F, SIwidthLimit2):
                 if ProblemFound:
                     Removed4 = PairToElim
                     C.remove(PairToElim)
+                    print(f"4Removed: {PairToElim}")
                     break
             if ProblemFound:
                 break
@@ -560,6 +608,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                 RightP = None
     for pair in ToRemove:
         C.remove(pair)
+        print(f"5Removed: {pair}")
     
     return {"Assignments": Assignments,
             "Edited_C": C,
@@ -736,7 +785,6 @@ def phase_two(Partners, C_F, F, C, Assignments, xCords):
                 if FrontLoopCount >= 50:
                     FullReset = True
                     break
-                print("P2R")
     
     # Combine and return assignment dictionaries
     Combined = Combine_Dictionaries(Assignments, P2Assignments)
@@ -812,7 +860,7 @@ def phase_three(Partners, C, P2Assignments, xCords, yCords):
                 restart = False
                 break
             if restart:
-                print("Reached impossibility in Phase 3 C Assignments\nRetrying...")
+                print("Reached impossibility in Phase 3 C Assignments... Retrying...")
                 counter += 1
                 break
         if not restart:
@@ -828,6 +876,7 @@ def phase_four(P3Assignments, I, xCords, yCords):
     counter = 0
     fullreset = False
     while True:
+        print("loop4")
         # Define available coordinates
         Available = []
         for x in xCords:
@@ -842,13 +891,14 @@ def phase_four(P3Assignments, I, xCords, yCords):
         for S in I:
             tried = []
             # If both students unassigned
-            if ((S[0] not in P3Assignments) and (S[0] not in P4Assignments)) and ((S[1] not in P3Assignments) and (S[1] not in P4Assignments)):
+            if escape and ((S[0] not in P3Assignments) and (S[0] not in P4Assignments)) and ((S[1] not in P3Assignments) and (S[1] not in P4Assignments)):
                 shuffle(S)
                 RC = choice(Available)
                 P4Assignments[S[0]] = RC
                 Available.remove(RC)
                 AsubT = []
                 while True:
+                    print("1")
                     for c in Available:
                         if c not in tried:
                             AsubT.append(c)
@@ -867,38 +917,65 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     P4Assignments[S[1]] = RC2
                     Available.remove(RC2)      
 
-            # If ONLY left is assigned OR ONLY right is assigned
-            # Uses A and B to reduce redundancy
-            b = 1
-            for a in range(2):
-                if ((S[a] in P3Assignments) or (S[a] in P4Assignments)) and ((S[b] not in P3Assignments) and (S[b] not in P4Assignments)):
-                    if S[a] in P3Assignments:
-                        RC = P3Assignments[S[a]]
-                    if S[a] in P4Assignments:
-                        RC = P4Assignments[S[a]]
-                    AsubT = []
-                    while True:
-                        for c in Available:
-                            if c not in tried:
-                                AsubT.append(c)
-                        if not AsubT:
-                            escape = False
-                            break
-                        RC2 = choice(AsubT)
-                        if ((abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1)) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
-                            break
-                        else:
-                            tried.append(RC2)
-                        if len(tried) == len(Available):
-                            escape = False
-                            break
-                    if escape:
-                        P4Assignments[S[b]] = RC2
-                        Available.remove(RC2)
-                b -= 1
+            # If ONLY left is assigned
+            if escape and ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] not in P3Assignments) and (S[1] not in P4Assignments)):
+                if S[0] in P3Assignments:
+                    RC = P3Assignments[S[0]]
+                if S[0] in P4Assignments:
+                    RC = P4Assignments[S[0]]
+                AsubT = []
+                while True:
+                    print("2")
+                    for c in Available:
+                        if c not in tried:
+                            AsubT.append(c)
+                    if not AsubT:
+                        escape = False
+                        break
+                    RC2 = choice(AsubT)
+                    if ((abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1)) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
+                        break
+                    else:
+                        tried.append(RC2)
+                    if len(tried) == len(Available):
+                        escape = False
+                        break
+                    print(f"S: {S}, RC: {RC}, Available: {Available}, tried: {tried}, RC2: {RC2}, AsubT: {AsubT}")
+                if escape:
+                    P4Assignments[S[1]] = RC2
+                    Available.remove(RC2)
+
+            # If ONLY right is assigned
+            if escape and ((S[1] in P3Assignments) or (S[1] in P4Assignments)) and ((S[0] not in P3Assignments) and (S[0] not in P4Assignments)):
+                if S[1] in P3Assignments:
+                    RC = P3Assignments[S[1]]
+                if S[1] in P4Assignments:
+                    RC = P4Assignments[S[1]]
+                AsubT = []
+                while True:
+                    print("3")
+                    for c in Available:
+                        if c not in tried:
+                            AsubT.append(c)
+                    if not AsubT:
+                        escape = False
+                        break
+                    RC2 = choice(AsubT)
+                    if ((abs(RC[0] - RC2[0]) > 1) or (abs(RC[1] - RC2[1]) > 1)) and (RC2 not in P3Assignments.values()) and (RC2 not in P4Assignments.values()):
+                        break
+                    else:
+                        tried.append(RC2)
+                    if len(tried) == len(Available):
+                        escape = False
+                        break
+                    print(f"S: {S}, RC: {RC}, Available: {Available}, tried: {tried}, RC2: {RC2}, AsubT: {AsubT}")
+                if escape:
+                    P4Assignments[S[0]] = RC2
+                    Available.remove(RC2)
+
 
             # Both assigned
-            if ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] in P3Assignments) or (S[1] in P4Assignments)):
+            if escape and ((S[0] in P3Assignments) or (S[0] in P4Assignments)) and ((S[1] in P3Assignments) or (S[1] in P4Assignments)):
                 if S[0] in P3Assignments:
                     x0 = P3Assignments[S[0]][0]
                     y0 = P3Assignments[S[0]][1]
@@ -912,15 +989,23 @@ def phase_four(P3Assignments, I, xCords, yCords):
                     x1 = P4Assignments[S[1]][0]
                     y1 = P4Assignments[S[1]][1]
                 if not ((abs(x1 - x0) > 1) or (abs(y1 - y0) > 1)):
-                    escape = False  
+                    escape = False
+            
+            # Retry if we can't escape:
+            if not escape:
+                break
         if escape:
             break
         else:
             print(f"Impossibility reached in Phase 4. Retrying. (Counter: {counter})")
             counter += 1
-        if counter >= MEDIUM_REP_LIMIT:
+            print("loop1")
+        if counter >= HIGH_REP_LIMIT:
+            tried.clear()
             fullreset = True
+            print("loop2")
             break
+    print("loop5")
     
     # Combine dictionaries
     Combined = Combine_Dictionaries(P3Assignments, P4Assignments)
@@ -949,3 +1034,13 @@ def Combine_Dictionaries(Dict1, Dict2):
     copy2 = Dict2.copy()
     copy1.update(copy2)
     return copy1
+
+def find_IF(I, F):
+    IF = []
+    for pair in I:
+        if (pair[0] in F) or (pair[1] in F):
+            IF.append(pair)
+    if IF:
+        return choice(IF)
+    else:
+        return None

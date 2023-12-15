@@ -563,6 +563,7 @@ function send_lists() {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
+                console.log("IMPORTANT: " + xhr.responseText);
                 response = JSON.parse(xhr.responseText);
                 load_plan(response);
             } else {
