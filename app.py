@@ -42,6 +42,8 @@ def change_inputs():
 # Responds to AJAX request using JSON data
 @app.route("/generate", methods=["POST"])
 def generate():
+    print(f'session["I"]: {session["I"]}')
+    print(len(session["I"]))
     height = session['Height']
     width = session['Width']
     partners = session['Partners']
@@ -49,27 +51,32 @@ def generate():
 
     lists = request.get_json()
     HI = lists['HIncomps']
+    F = lists['Fronts']
     I = lists['Incomps']
     C = lists['Comps']
-    F = lists['Fronts']
-    session["I"] = I
-    session["C"] = C
+    session["I"] = I.copy()
+    session["C"] = C.copy()
 
     output = seating_algorithm(names, height, width, HI, I, C, F, partners)
-    Ass = output["Ass"]
-    Removed = output["Removed"]
-
-    data = {
-        "Ass": Ass,
-        "Height": height,
-        "Width": width,
-        "Partners": partners,
-        "Fronts": F,
-        "HI": HI,
-        "Removed": Removed
-    }
-    return jsonify(data)
+    if not output["Timeout"]:
+        Ass = output["Ass"]
+        CompRemoved = output["CompRemoved"]
+        IncompRemoved = output["IncompRemoved"]
+        data = {
+            "Ass": Ass,
+            "Height": height,
+            "Width": width,
+            "Partners": partners,
+            "Fronts": F,
+            "HI": HI,
+            "CompRemoved": CompRemoved,
+            "IncompRemoved": IncompRemoved,
+            "Timeout": False
+        }
+        return jsonify(data)
+    else:
+        return jsonify({"Timeout": True})
 
 @app.route("/tutorial", methods=["GET"])
 def tutorial():
-    return render_template("tutorial.html", Names=session['Names'], PartnerMode=session['Partners'])
+    return render_template("tutorial.html")

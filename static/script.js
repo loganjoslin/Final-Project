@@ -24,12 +24,16 @@ function dimensions_to_namelist() {
     if (document.querySelector(".desk").style.height == PartnerModeDeskHeight) {
         width *= 2;
     }
-    document.querySelector('#InputWidth').value = width;
-    document.querySelector('#InputHeight').value = height;
-    // Animation
-    let ElementsToFadeOut = ['#dimensions'];
-    let ElementsToFadeIn = ['#NameList'];
-    fade(ElementsToFadeOut, ElementsToFadeIn);
+    if ((width >= 4) && (height * width >= 16)) {
+        document.querySelector('#InputWidth').value = width;
+        document.querySelector('#InputHeight').value = height;
+        // Animation
+        let ElementsToFadeOut = ['#dimensions'];
+        let ElementsToFadeIn = ['#NameList'];
+        fade(ElementsToFadeOut, ElementsToFadeIn);
+    } else {
+        alert("Class must be at least 4 single desks wide and have space for at least 16 students!")
+    }
 }
 
 
@@ -240,7 +244,7 @@ const DBLclickBorder = '2px solid crimson'
 
 const FrontLimit = 3;
 const MaxIncompPairAreaDivisor = 2;
-const MaxCompPairAreaDivisor = 2;
+const MaxCompPairAreaDivisor = 1.5;
 const NxtBtnDivisor = 2.5;
 
 let maxChoices = 2;
@@ -551,10 +555,10 @@ function send_lists() {
         Comps: Comps,
         Fronts: Fronts
     };
-    console.log("HIncomps: " + HIncomps)
-    console.log("Incomps: " + Incomps)
-    console.log("Comps: " + Comps)
-    console.log("Fronts: " + Fronts)
+    console.log("HIncomps: " + HIncomps.length)
+    console.log("Incomps: " + Incomps.length)
+    console.log("Comps: " + Comps.length)
+    console.log("Fronts: " + Fronts.length)
     // Start an AJAX request
     let xhr = new XMLHttpRequest();
     xhr.open('POST', '/generate', true);
@@ -578,6 +582,14 @@ function send_lists() {
 // Load the final seating plan based on response from backend
 const DESK_MINWIDTH = 150;
 function load_plan(response) {
+    // Check for Timeout
+    if (response['Timeout']) {
+        console.log("timout")
+        document.querySelector('#LoadingScreen').style.display = "none";
+        document.querySelector('#Timeout').style.display = "block";
+        return
+    }
+    console.log("no timeout")
     // Backend response data
     let Assignments = response['Ass'];
     let Height = response['Height'];
@@ -694,17 +706,25 @@ function load_plan(response) {
 
     // Reconfigure+Regenerate buttons on bottom of page
     document.querySelector("#ResetButtons").style.display = "block";
-    let Removed = response["Removed"];
-    console.log(Removed);
-    if (Removed.length > 0) {
-        document.querySelector("#RemovedPairsDesc").style.display = "block";
-        pairList = document.querySelector("#pairList");
-        for (let c = 0; c < Removed.length; c++) {
-            li = document.createElement("li");
-            li.innerHTML = Removed[c][0] + " and " + Removed[c][1];
-            pairList.appendChild(li);
+    let CompRemoved = response["CompRemoved"];
+    let IncompRemoved = response["IncompRemoved"];
+    let lists = [CompRemoved, IncompRemoved];
+    let pairList = document.querySelector("#pairList");
+    let type = "Compatible";
+    for (let z = 0; z < lists.length; z++) {
+        if ( z == 1) {
+            type = "Incompatible";
+        }
+        if (lists[z].length > 0) {
+            document.querySelector("#RemovedPairsDesc").style.display = "block";
+            for (let c = 0; c < lists[z].length; c++) {
+                let li = document.createElement("li");
+                li.innerHTML = lists[z][c][0] + " and " + lists[z][c][1] + " (" + type + ")";
+                pairList.appendChild(li);
+            }
         }
     }
+
 
     // Table aesthetic adjustments
     let RedTableTitle = document.querySelector("#RedTableTitle");
@@ -789,6 +809,7 @@ function regenerate_plan() {
     }
 
     // Hide elements for loading screen
+    PlanContainer.style.display = "none";
     document.querySelector("#RemovedPairsDesc").style.display = "none";
     document.querySelector("#ResetButtons").style.display = "none";
     document.querySelector("#compTables").style.display = "none";
@@ -805,7 +826,7 @@ function regenerate_plan() {
 
 const FadeOutSpecs = "fadeOut 0.10s";
 const FadeInSpecs = "fadeIn 0.10s";
-const TimeOut = 90;
+const TimeOut = 80;
 // "Timeout" must be slightly shorter than animation time
 
 function fade(ElementsOut, ElementsIn) {
@@ -849,23 +870,3 @@ function ScrollTop() {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
 }
-
-// function smooth_redirect_transition(path) {
-//     let body = document.querySelector("body");
-//     let elements = body.querySelectorAll("*");
-//     let exclude = body.querySelectorAll(".EFF");
-//     for (let x = 0; x < elements.length; x++) {
-//         let excluded = false;
-//         for (let y = 0; y < exclude.length; y++) {
-//             if (elements[x] == exclude[y]) {
-//                 excluded = true;
-//             }
-//         }
-//         if (!excluded) {
-//             elements[x].style.animation = "fadeOut 0.5s";
-//         }
-//     }
-//     setTimeout(function() {
-//         window.location.href = path;
-//     }, 300);
-// }

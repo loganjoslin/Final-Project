@@ -128,8 +128,15 @@
             </div>
         </div>
 
-        <div id="LoadingScreen" class="row text-center">
+        <div id="LoadingScreen" class="row text-center mt-5">
             <h1 class="mt-5">Creating your plan...</h1>
+            <div class="d-flex justify-content-center mt-3"><div class="loader"></div></div>
+        </div>
+
+        <div id="Timeout" class="row text-center">
+            <h1 class="mt-5">Timeout</h1>
+            <p class="fs-5" >Sorry, this input was too demanding for Seating50. Try reducing the amount of Incompatible pairs.</p>
+            <a href="/setup"><button class="btn btn-dark">Change Inputs</button></a>
         </div>
 
         <!--Buttons for regenerating/restarting-->
@@ -137,11 +144,11 @@
             <hr style="height:2px;color:#333;opacity:1;">
             <div class="d-flex justify-content-start my-3">
                 <button onclick="regenerate_plan()" class="btn btn-dark">Regenerate</button>
-                <a href="/setup"><button type="submit" class="btn btn-dark mx-2">Change Inputs</button></a>
+                <a href="/setup"><button class="btn btn-dark mx-2">Change Inputs</button></a>
                 <a href="/"><button class="btn btn-dark">Restart</button></a>
             </div>
             <p id="RemovedPairsDesc">
-                Some compatible pairs needed to be removed due to logical impossibilities.
+                Some pairs needed to be removed due to logical impossibilities.
                 If you wish to learn more about this, visit the "README.MD" file. You can also regenerate the plan or
                 change your inputs to try for different/less pair omissions. These pairs were removed:
             </p>
