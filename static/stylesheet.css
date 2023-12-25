@@ -45,12 +45,12 @@ body {
 }
 #DimDescription {margin-top:20px;}
 
-/*Initial visibility of elements for first page*/
+/* Initial visibility of elements for first page */
 #titleOverall {display: block;}
 #dimensions {display: none;}
 #NameList {display: none;}
 
-/*Initial visibiliy of elements for second page*/
+/* Initial visibiliy of elements for second page */
 #InfoTitle {display:block;}
 #NextButton {display:none;height:40px;width:80px;}
 #compTables {display:block;}

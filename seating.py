@@ -78,8 +78,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
                 output = fix_compatibles_2(C, C_F, SIwidthLimit2)
                 C = output["C"]
                 RemovedC = RemovedC + output["Removed4"]
-                P3FailCounter = 0
-                P2CFailCounter = 0
+                P3FailCounter, P2CFailCounter = 0, 0
             # Overwhelming I pairs list occuring in P2 or P3. Neglect a pair.
             if P1IFailCounter > MEDIUM_REP_LIMIT or P2IFailCounter > HIGHER_REP_LIMIT or P3IFailCounter > HIGHER_REP_LIMIT or P4IFailCounter > HIGH_REP_LIMIT:
                 I_F_pair = find_IF(I, F)
@@ -90,10 +89,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
                     Rand_I_Pair = choice(I)
                     I.remove(Rand_I_Pair)
                     RemovedI.append(Rand_I_Pair)
-                P1IFailCounter = 0
-                P2IFailCounter = 0
-                P3IFailCounter = 0
-                P4IFailCounter = 0
+                P1IFailCounter, P2IFailCounter, P3IFailCounter, P4IFailCounter = 0, 0, 0, 0
             
             # Find and store students who exist in multiple categories.
             MCS = get_MCS(HI, C, F)
@@ -437,7 +433,7 @@ def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Limit, Removed,
         print(f"half-way pair: {{PairToElim}}")
     if not Buddies:
         return False
-        # No partners, therefore no loop.
+        # No partners, therefore no loop/ end of string
     if Buddies[0] == BaseStudent:
         C.remove(PairToElim)
         Removed.append(PairToElim)

@@ -240,7 +240,7 @@ const IncompBG = 'rgba(220, 20, 60, 0.1)';
 const CompBG = 'rgba(34, 139, 34, 0.1)';
 const DarkBG = 'rgb(80, 172, 203)';
 const LightBG = 'rgb(173, 216, 230)';
-const DBLclickBorder = '2px solid crimson'
+const DBLclickBorder = '2px solid crimson';
 
 const FrontLimit = 3;
 const MaxIncompPairAreaDivisor = 2;
