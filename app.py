@@ -4,7 +4,7 @@ import re
 
 # Configure app
 app = Flask(__name__)
-app.secret_key = 'Minecraft'
+app.secret_key = 'ABC123'
 
 # Starting page "index.html"
 # Initialize session data
