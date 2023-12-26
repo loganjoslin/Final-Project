@@ -1,6 +1,7 @@
-# Seating50
+# Seating50 - The Optimal Seating Plan Generator
 ----
 ## Video Demo:
+https://www.youtube.com/watch?v=FfMmps0m7Tw
 
 ## Description:
 For my CS50 final project, I have created a valuable tool for teachers with unruly students! Seating50 is a web application that uses four input fields to generate an optimal classroom seating plan. While proper order may be subjective to the teacher, I've found that all high-quality plans are generally based on three core conditions:
@@ -16,7 +17,7 @@ While these conditions are simple in isolation, more chaotic classrooms make fin
 On the front end, the user may input as much information as possible regarding the conditions above. That is, compatible, incompatible, and front-bound students. They may also select up to two incompatible pairs to be deemed "Highly Incompatible." These student pairs are maximally separated. I focused much energy on making a user-friendly GUI, hoping to encourage the user to saturate the algorithm. More demanding inputs generally lead to more optimal final output.
 
 ## Usage:
-Using Seating50 just requires the installation of Python3 and Python's Flask framework. Otherwise, the Bootstrap files are fetched in the header of "layout.html" using a URL and all other features should be supported by your browser. Use the "flask run" command in your terminal to get started.
+Using Seating50 requires the installation of Python3 and Python's Flask framework. Otherwise, the Bootstrap files are fetched in the header of "layout.html" using a URL and all other features should be supported by your browser. Use the "flask run" command in your terminal to get started.
 
 ```bash
 pip install flask
@@ -26,7 +27,9 @@ pip install flask
 flask run
 ```
 
-## How It Works
+For a detailed tutorial and tour of the app, click the "Seating50 Tutorial" link in the navbar once you've generated and opened the URL. All steps should be displayed neatly by the HTML.
+
+## How the Seating50 Algorithm Works
 
 The sorting algorithm imagines the grid of desks as a cartesian plan, in which user-inputted constraints limit how individuals may be assigned coordinates. Essentially, students are repeatedly assigned random positions until a configuration satisfies all constraints. However, as inputs become more demanding, this approach alone becomes futile.
 
@@ -105,7 +108,7 @@ HI_F = MCS["HI_F"]
 C_F = MCS["C_F"]
 ```
 
-- Codebase Size: Admittedly, the logic for this algorithm could probably have been condensed and designed more optimally. There is slight redundancy in the algorithm's five phases, which could have been reduced, but I did my best to keep it at a minimum. Consequently, the program became quite large, and bugs became more challenging to locate and fix in the later stages. I conducted the heaviest testing when the frontend GUI had been fully developed; at this point, the codebase was nearing two thousand lines in aggregate. Thus, I uncovered the most bugs when fixing them was most strenuous!
+- Codebase Size: Admittedly, the logic for this algorithm could probably have been condensed and designed more optimally. There is slight redundancy in the algorithm's five phases, which could have been reduced, but I did my best to keep it at a minimum. Consequently, the program became quite large, and bugs became more challenging to locate and fix in the later stages. I conducted the heaviest testing when the frontend GUI had been fully developed; at this point, the codebase was nearing two thousand lines in aggregate. Thus, I uncovered the most bugs when fixing them was most strenuous! Frustratingly, the most painful bugs were simple logical errors I initially overlooked. These often involved indexing into empty lists, getting stuck in loops due to logical placement impossibilities, and slight errors in my reasoning in solving smaller-scope problems. In fact, after hours of painful searching, most of these could be solved with a simple "if" statement.
 
 - JavaScript: Before starting this project, my knowledge of Javascript syntax and capabilities needed to be improved. Much research was required to begin the GUI, and I often found myself browsing the web for solutions to various problems while implementing it. The functionality was thus the most challenging part of the front end, as I already knew a sufficient amount of CSS, HTML, and Bootstrap.
 
@@ -157,7 +160,7 @@ def loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Limit, Removed,
     return loop_check(BaseStudent, OtherS, PreviousStudent, Counter, C, Limit, Removed, pair, PairToElim)
 ```
 
-## Important Files
+## Important Files Involved
 
 Using the CSS properties "display: hidden" and "display: block," I could store the main HTML into two documents. By consolidating all this code, I can minimize the amount of backend requests and thus allow for a more seamless user experience. "Index.html" stores the HTML for the classroom dimension selection and student name input area. Once the user inputs the names, "app.py" renders "compatibles.html," which stores the rest of the visuals. Whenever users need a tutorial, they may select the "Seating50 Tutorial" button in the navbar to render "tutorial.html."
 
@@ -208,5 +211,10 @@ const MaxIncompPairAreaDivisor = 2;
 const MaxCompPairAreaDivisor = 1.5;
 const NxtBtnDivisor = 2.5;
 ```
+
+## Conclusion and Future Updates
+Seating50 uses a "guided randomization" approach to create an optimal classroom seating plan. The quality of this plan depends on the volume of user input, which pertains to three code conditions. In implementing the algorithm, some logical impossibilities, along with general codebase size, made bug fixing an arduous task. In the end, the algorithm may not yet be perfect, but this approach is a step in the right direction for solving many similar organizations in the future.
+
+In upcoming updates, I want to add tolerance for a larger variety of classroom layouts, perhaps larger tables in different formations. I am also looking to find ways to allow the algorithm to take in more input. At the moment, it accepts more input than I ever thought it would, but the algorithm always reaches a "wall" at a certain point. Sufficiently high demand will obviously become impossible to fulfill, but I have yet to reach the limit. Seating50 undoubtedly has room for improvement!
 
 
