@@ -1,0 +1,9 @@
+*NOTE TO SELF*
+
+When students are selected as HI and F under the DUPS path, non-repeated pair is placed together. However,
+if this non-repeated pair is incompatible, then this creates an impossibility.
+
+Solution:
+In the dups path, create a section that checks the relationship between these students. If incompatible and frontbound
+
+The variable detecting/dealing with this impossibility will be "PlaceOnMargin"

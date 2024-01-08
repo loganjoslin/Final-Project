@@ -20,7 +20,7 @@ On the front end, the user may input as much information as possible regarding t
 Using Seating50 requires the installation of Python3 and Python's Flask framework. Otherwise, the Bootstrap files are fetched in the header of "layout.html" using a URL and all other features should be supported by your browser. Use the "flask run" command in your terminal to get started.
 
 ```bash
-pip install flask
+pip3 install flask
 ```
 
 ```bash

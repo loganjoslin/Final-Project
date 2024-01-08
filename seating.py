@@ -106,12 +106,12 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
                     P1 = phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords)
                     Assignments = P1["Assignments"]
                     P1Assignments = Assignments.copy()
-                    if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
+                    if I_check(Assignments, I, HI) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                         print("P1 successful")
                         C = P1["Edited_C"]
                         Removed3 = P1["Removed"]
                         break
-                    if not I_check(Assignments, I):
+                    if not I_check(Assignments, I, HI):
                         P1IFailCounter += 1
                     print("Retrying P1 (Did not pass checks)")
                     P1Counter += 1
@@ -135,10 +135,10 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
                         escape_loop = False
                         print("PHASE 2 FULL RESET")
                         break
-                    if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
+                    if I_check(Assignments, I, HI) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                         print("P2 successful")
                         break
-                    if not I_check(Assignments, I):              
+                    if not I_check(Assignments, I, HI):              
                         P2IFailCounter += 1
                     if not C_check(Assignments, C, Partners):
                         P2CFailCounter += 1
@@ -161,11 +161,11 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
                         P3FailCounter += 1
                         escape_loop = False
                         break
-                    if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
+                    if I_check(Assignments, I, HI) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                         print("P3 successful")
                         break
                     else:
-                        if not I_check(Assignments, I):              
+                        if not I_check(Assignments, I, HI):              
                             P3IFailCounter += 1
                         print("Retrying P3 (Did not pass checks)")
                         P3Counter += 1
@@ -186,7 +186,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
                         escape_loop = False
                         P4IFailCounter += 1
                         break
-                    if I_check(Assignments, I) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
+                    if I_check(Assignments, I, HI) and F_check(Assignments, F) and C_check(Assignments, C, Partners):
                         print("P4 successful")
                         break
                     else:
@@ -200,7 +200,7 @@ def seating_algorithm(dirtyNames, Height, Width, HI, OriginalI, dirtyC, F, Partn
             if escape_loop:
                 # PHASE 5: Place remaining neutral students
                 Names = phase_five(Assignments, xCords, yCords, Names)
-                if I_check(Names, I) and F_check(Names, F) and C_check(Names, C, Partners):
+                if I_check(Names, I, HI) and F_check(Names, F) and C_check(Names, C, Partners):
                     print("P5 successful")
                 else:
                     print("P5 did not pass checks. FULL RESET")
@@ -586,7 +586,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         # Place "A" on left/right margin
         margins = [LeftMargin, RightMargin]
         shuffle(margins)
-        assigns = place_on_margin(Partners, dupStudent, margins[0], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+        assigns = place_on_margin(Partners, dupStudent, margins[0], HI_C_F, HI_F, HI_C, C, F, Width, yCords, True)
         for student in assigns:
             Assignments[student] = assigns[student]
 
@@ -606,7 +606,10 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
             otherSf = otherS
         for S in otherSf:
             while True:
-                assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+                if (S == otherSf[1]) and ([otherSf[0], otherSf[1]] in I or [otherSf[1], otherSf[0]] in I) and (otherSf[0] in F) and (otherSf[1] in F):
+                    assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F, Width, yCords, False)
+                else:
+                    assigns = place_on_margin(Partners, S, margins[1], HI_C_F, HI_F, HI_C, C, F, Width, yCords, True)
                 repeats = False
                 for student in assigns:
                     if assigns[student] in Assignments.values():
@@ -625,7 +628,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
         margins = [LeftMargin, RightMargin]
         shuffle(margins)
         for n in range(2):
-            assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+            assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords, True)
             for student in assigns:
                 Assignments[student] = assigns[student]
             # Get list of all HI students:
@@ -644,7 +647,7 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
                 if pair[n] not in Assignments:
                     while True:
                         break_loop = True
-                        assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords)
+                        assigns = place_on_margin(Partners, pair[n], margins[n], HI_C_F, HI_F, HI_C, C, F, Width, yCords, True)
                         for student in assigns:
                             if assigns[student] in Assignments.values():
                                 break_loop = False
@@ -712,13 +715,16 @@ def phase_one(Partners, HI, HI_C_F, HI_C, HI_F, C, F, I, Width, yCords):
             "Removed": ToRemove}
 
 # Used in both phase one paths to place a student on a certain margin (left or right).
-def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F, Width, yCords):
+def place_on_margin(Partners, Student, Margin, HI_C_F, HI_F, HI_C, C, F, Width, yCords, PlaceOnMargin):
     assigns = {}
     while True:
         break_loop = True
 
         # Place Student on margin. If front-bound, place in front.
         x = choice(Margin)
+        if not PlaceOnMargin:
+            middle = int(round((Width - 1) / 2))
+            x = choice([middle - 1, middle, middle + 1])
         if Student in HI_F or Student in HI_C_F:
             y = choice([0, 0, 0, 0, 1])
         elif front_partner_check(Student, F, C):
@@ -772,9 +778,12 @@ def front_partner_check(Student, F, C):
     return False
 
 # Ensures all I students are sufficiently separated after EVERY PHASE
-def I_check(Assignments, I):
+def I_check(Assignments, I, HI):
     Existing = []
     for pair in I:
+        if pair[0] in Assignments and pair[1] in Assignments:
+            Existing.append(pair)
+    for pair in HI:
         if pair[0] in Assignments and pair[1] in Assignments:
             Existing.append(pair)
     for pair in Existing:
